@@ -1,5 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   Image,
   ImageBackground,
   StyleSheet,
@@ -26,6 +27,7 @@ type DogCardProps = {
   unlocked: boolean;
   index: number;
   isSelected: boolean;
+  flashKind?: 'food' | 'water' | null;
   onPress: (id: DogId) => void;
 };
 
@@ -55,82 +57,137 @@ const ensureUnlocked = (v: string | null): DogId[] => {
 };
 
 const DogCard = React.memo(
-  ({ dog, unlocked, isSelected, onPress }: DogCardProps) => {
+  ({ dog, unlocked, isSelected, flashKind, onPress }: DogCardProps) => {
+    const cardShakeX = useRef(new Animated.Value(0)).current;
+
+    const runLockedCardShake = useCallback(() => {
+      cardShakeX.stopAnimation();
+      cardShakeX.setValue(0);
+      Animated.sequence([
+        Animated.timing(cardShakeX, {
+          toValue: -7 * s,
+          duration: 45,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cardShakeX, {
+          toValue: 7 * s,
+          duration: 45,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cardShakeX, {
+          toValue: -5 * s,
+          duration: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cardShakeX, {
+          toValue: 5 * s,
+          duration: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cardShakeX, {
+          toValue: 0,
+          duration: 35,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, [cardShakeX]);
+
+    const handlePress = useCallback(() => {
+      if (!unlocked) {
+        runLockedCardShake();
+        return;
+      }
+      onPress(dog.id);
+    }, [dog.id, onPress, runLockedCardShake, unlocked]);
+
     return (
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() => onPress(dog.id)}
-        style={[styles.cardWrap]}
+      <Animated.View
+        style={[styles.cardWrap, { transform: [{ translateX: cardShakeX }] }]}
       >
-        <ImageBackground
-          style={styles.cardBg}
-          source={
-            unlocked
-              ? require('../assets/images/unlockedBg.png')
-              : require('../assets/images/lockedBg.png')
-          }
-          resizeMode="stretch"
-        >
-          <View
-            style={[styles.card, isSelected && unlocked && styles.cardSelected]}
+        <TouchableOpacity activeOpacity={0.85} onPress={handlePress}>
+          <ImageBackground
+            style={styles.cardBg}
+            source={
+              unlocked
+                ? require('../assets/images/unlockedBg.png')
+                : require('../assets/images/lockedBg.png')
+            }
+            resizeMode="stretch"
           >
-            {unlocked ? (
-              <>
-                <Image
-                  source={dog.image ?? require('../assets/images/dog1.png')}
-                  style={styles.dogImg}
-                  resizeMode="contain"
-                />
-
-                <View style={styles.bars}>
-                  <View style={styles.barRow}>
+            <View
+              style={[styles.card, isSelected && unlocked && styles.cardSelected]}
+            >
+              {unlocked ? (
+                <>
+                  {flashKind ? (
                     <Image
-                      source={require('../assets/images/foodbowl.png')}
-                      style={styles.foodIcon}
+                      source={
+                        flashKind === 'food'
+                          ? require('../assets/images/foodbowl.png')
+                          : require('../assets/images/waterbowl.png')
+                      }
+                      style={styles.cardFlashBowl}
                       resizeMode="contain"
                     />
-                    <View style={styles.barBg}>
-                      <View
-                        style={[styles.barFill, { width: `${dog.hunger}%` }]}
-                      />
-                    </View>
-                  </View>
+                  ) : null}
 
-                  <View style={styles.barRow}>
-                    <Image
-                      source={require('../assets/images/waterbowl.png')}
-                      style={styles.foodIcon}
-                      resizeMode="contain"
-                    />
-                    <View style={styles.barBg}>
-                      <View
-                        style={[styles.barFill, { width: `${dog.thirst}%` }]}
+                  <Image
+                    source={dog.image ?? require('../assets/images/dog1.png')}
+                    style={styles.dogImg}
+                    resizeMode="contain"
+                  />
+
+                  <View style={styles.bars}>
+                    <View style={styles.barRow}>
+                      <Image
+                        source={require('../assets/images/foodbowl.png')}
+                        style={styles.foodIcon}
+                        resizeMode="contain"
                       />
+                      <View style={styles.barBg}>
+                        <View
+                          style={[styles.barFill, { width: `${dog.hunger}%` }]}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.barRow}>
+                      <Image
+                        source={require('../assets/images/waterbowl.png')}
+                        style={styles.foodIcon}
+                        resizeMode="contain"
+                      />
+                      <View style={styles.barBg}>
+                        <View
+                          style={[styles.barFill, { width: `${dog.thirst}%` }]}
+                        />
+                      </View>
                     </View>
                   </View>
-                </View>
-              </>
-            ) : (
-              <ImageBackground
-                source={require('../assets/images/smallButton.png')}
-                style={styles.lockBtn}
-                resizeMode="stretch"
-              >
-                <Image
-                  source={require('../assets/images/lock.png')}
-                  resizeMode="contain"
-                />
-              </ImageBackground>
-            )}
-          </View>
-        </ImageBackground>
-      </TouchableOpacity>
+                </>
+              ) : (
+                <ImageBackground
+                  source={require('../assets/images/smallButton.png')}
+                  style={styles.lockBtn}
+                  resizeMode="stretch"
+                >
+                  <Image
+                    source={require('../assets/images/lock.png')}
+                    resizeMode="contain"
+                  />
+                </ImageBackground>
+              )}
+            </View>
+          </ImageBackground>
+        </TouchableOpacity>
+      </Animated.View>
     );
   },
   (prev, next) =>
     prev.dog === next.dog &&
     prev.unlocked === next.unlocked &&
     prev.isSelected === next.isSelected &&
+    prev.flashKind === next.flashKind &&
     prev.index === next.index,
 );
 
@@ -170,6 +227,41 @@ const HomeScreen: React.FC = () => {
   ]);
 
   const [selectedDogId, setSelectedDogId] = useState<DogId>('dog-1');
+  const foodShakeX = useRef(new Animated.Value(0)).current;
+  const waterShakeX = useRef(new Animated.Value(0)).current;
+  const [cardFlash, setCardFlash] = useState<{
+    dogId: DogId;
+    kind: 'food' | 'water';
+  } | null>(null);
+  const flashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showCardFlash = useCallback((dogId: DogId, kind: 'food' | 'water') => {
+    setCardFlash({ dogId, kind });
+    if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+    flashTimeoutRef.current = setTimeout(() => {
+      setCardFlash(null);
+      flashTimeoutRef.current = null;
+    }, 1000);
+  }, []);
+
+  const runShake = useCallback((value: Animated.Value) => {
+    value.stopAnimation();
+    value.setValue(0);
+    Animated.sequence([
+      Animated.timing(value, { toValue: -6 * s, duration: 45, useNativeDriver: true }),
+      Animated.timing(value, { toValue: 6 * s, duration: 45, useNativeDriver: true }),
+      Animated.timing(value, { toValue: -4 * s, duration: 40, useNativeDriver: true }),
+      Animated.timing(value, { toValue: 4 * s, duration: 40, useNativeDriver: true }),
+      Animated.timing(value, { toValue: 0, duration: 35, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+    },
+    [],
+  );
 
   const loadFromStorage = useCallback(async () => {
     try {
@@ -235,10 +327,14 @@ const HomeScreen: React.FC = () => {
     if (!isUnlocked(selectedDog.id)) return;
 
     setFoodCount(c => {
-      if (c <= 0) return c;
+      if (c <= 0) {
+        runShake(foodShakeX);
+        return c;
+      }
 
       const next = c - 1;
       AsyncStorage.setItem(STORAGE_FOOD_COUNT, String(next));
+      showCardFlash(selectedDog.id, 'food');
 
       setDogs(prev =>
         prev.map(d =>
@@ -250,17 +346,21 @@ const HomeScreen: React.FC = () => {
 
       return next;
     });
-  }, [isUnlocked, selectedDog]);
+  }, [foodShakeX, isUnlocked, runShake, selectedDog, showCardFlash]);
 
   const waterSelectedDog = useCallback(() => {
     if (!selectedDog) return;
     if (!isUnlocked(selectedDog.id)) return;
 
     setWaterCount(c => {
-      if (c <= 0) return c;
+      if (c <= 0) {
+        runShake(waterShakeX);
+        return c;
+      }
 
       const next = c - 1;
       AsyncStorage.setItem(STORAGE_WATER_COUNT, String(next));
+      showCardFlash(selectedDog.id, 'water');
 
       setDogs(prev =>
         prev.map(d =>
@@ -272,7 +372,7 @@ const HomeScreen: React.FC = () => {
 
       return next;
     });
-  }, [isUnlocked, selectedDog]);
+  }, [isUnlocked, runShake, selectedDog, showCardFlash, waterShakeX]);
 
   return (
     <Layout>
@@ -285,35 +385,39 @@ const HomeScreen: React.FC = () => {
       </ImageBackground>
 
       <View style={styles.topCounters}>
-        <TouchableOpacity activeOpacity={0.85} onPress={feedSelectedDog}>
-          <ImageBackground
-            source={require('../assets/images/smallButton.png')}
-            style={styles.counterFrame}
-            resizeMode="stretch"
-          >
-            <Text style={styles.counterText}>{foodCount}</Text>
-            <Image
-              source={require('../assets/images/foodbowl.png')}
-              style={styles.counterIcon}
-              resizeMode="contain"
-            />
-          </ImageBackground>
-        </TouchableOpacity>
+        <Animated.View style={{ transform: [{ translateX: foodShakeX }] }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={feedSelectedDog}>
+            <ImageBackground
+              source={require('../assets/images/smallButton.png')}
+              style={styles.counterFrame}
+              resizeMode="stretch"
+            >
+              <Text style={styles.counterText}>{foodCount}</Text>
+              <Image
+                source={require('../assets/images/foodbowl.png')}
+                style={styles.counterIcon}
+                resizeMode="contain"
+              />
+            </ImageBackground>
+          </TouchableOpacity>
+        </Animated.View>
 
-        <TouchableOpacity activeOpacity={0.85} onPress={waterSelectedDog}>
-          <ImageBackground
-            source={require('../assets/images/smallButton.png')}
-            style={styles.counterFrame}
-            resizeMode="stretch"
-          >
-            <Text style={styles.counterText}>{waterCount}</Text>
-            <Image
-              source={require('../assets/images/waterbowl.png')}
-              style={styles.counterIcon}
-              resizeMode="contain"
-            />
-          </ImageBackground>
-        </TouchableOpacity>
+        <Animated.View style={{ transform: [{ translateX: waterShakeX }] }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={waterSelectedDog}>
+            <ImageBackground
+              source={require('../assets/images/smallButton.png')}
+              style={styles.counterFrame}
+              resizeMode="stretch"
+            >
+              <Text style={styles.counterText}>{waterCount}</Text>
+              <Image
+                source={require('../assets/images/waterbowl.png')}
+                style={styles.counterIcon}
+                resizeMode="contain"
+              />
+            </ImageBackground>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
 
       <View style={styles.grid}>
@@ -324,6 +428,9 @@ const HomeScreen: React.FC = () => {
             unlocked={isUnlocked(dog.id)}
             index={i}
             isSelected={dog.id === selectedDogId}
+            flashKind={
+              cardFlash && cardFlash.dogId === dog.id ? cardFlash.kind : null
+            }
             onPress={selectDog}
           />
         ))}
@@ -446,6 +553,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  cardFlashBowl: {
+    position: 'absolute',
+    top: 12 * s,
+    right: 12 * s,
+    width: 28 * s,
+    height: 28 * s,
+    zIndex: 3,
   },
   cardSelected: {
     borderColor: '#2b74ff',

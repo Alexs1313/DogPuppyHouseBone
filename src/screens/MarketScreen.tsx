@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
+  Animated,
   Image,
   ImageBackground,
   StyleSheet,
@@ -75,6 +75,9 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
   const [unlockedDogs, setUnlockedDogs] = useState<string[]>(['dog-1']);
   const [dogIndex, setDogIndex] = useState(0);
   const navigation = useNavigation();
+  const foodShakeX = useRef(new Animated.Value(0)).current;
+  const waterShakeX = useRef(new Animated.Value(0)).current;
+  const dogShakeX = useRef(new Animated.Value(0)).current;
 
   const activeDog = useMemo(() => DOGS[dogIndex], [dogIndex]);
   const isUnlocked = useMemo(
@@ -128,31 +131,43 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
     await AsyncStorage.setItem(STORAGE_UNLOCKED_DOGS, JSON.stringify(next));
   }, []);
 
+  const runShake = useCallback((value: Animated.Value) => {
+    value.stopAnimation();
+    value.setValue(0);
+    Animated.sequence([
+      Animated.timing(value, { toValue: -6 * s, duration: 45, useNativeDriver: true }),
+      Animated.timing(value, { toValue: 6 * s, duration: 45, useNativeDriver: true }),
+      Animated.timing(value, { toValue: -4 * s, duration: 40, useNativeDriver: true }),
+      Animated.timing(value, { toValue: 4 * s, duration: 40, useNativeDriver: true }),
+      Animated.timing(value, { toValue: 0, duration: 35, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
   const buyFood = useCallback(async () => {
     if (bones < PRICE_FEED) {
-      Alert.alert('Not enough bones');
+      runShake(foodShakeX);
       return;
     }
     const nextBones = bones - PRICE_FEED;
     const nextFood = foodCount + 1;
     await Promise.all([saveBones(nextBones), saveFood(nextFood)]);
-  }, [bones, foodCount, saveBones, saveFood]);
+  }, [bones, foodCount, foodShakeX, runShake, saveBones, saveFood]);
 
   const buyWater = useCallback(async () => {
     if (bones < PRICE_WATER) {
-      Alert.alert('Not enough bones');
+      runShake(waterShakeX);
       return;
     }
     const nextBones = bones - PRICE_WATER;
     const nextWater = waterCount + 1;
     await Promise.all([saveBones(nextBones), saveWater(nextWater)]);
-  }, [bones, saveBones, saveWater, waterCount]);
+  }, [bones, runShake, saveBones, saveWater, waterCount, waterShakeX]);
 
   const buyDog = useCallback(async () => {
     if (isUnlocked) return;
 
     if (bones < activeDog.price) {
-      Alert.alert('Not enough bones');
+      runShake(dogShakeX);
       return;
     }
 
@@ -164,7 +179,9 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
     activeDog.id,
     activeDog.price,
     bones,
+    dogShakeX,
     isUnlocked,
+    runShake,
     saveBones,
     saveUnlocked,
     unlockedDogs,
@@ -286,30 +303,32 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
                 </ImageBackground>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={buyDog}
-                disabled={isUnlocked || activeDog.price === 0}
-              >
-                <ImageBackground
-                  source={require('../assets/images/mainbutton.png')}
-                  style={styles.buyBoard}
-                  resizeMode="stretch"
+              <Animated.View style={{ transform: [{ translateX: dogShakeX }] }}>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={buyDog}
+                  disabled={isUnlocked || activeDog.price === 0}
                 >
-                  {isUnlocked ? (
-                    <Text style={styles.buyText}>Received</Text>
-                  ) : (
-                    <View style={styles.priceInline}>
-                      <Image
-                        source={imgBone}
-                        style={styles.priceBone}
-                        resizeMode="contain"
-                      />
-                      <Text style={styles.buyText}>{activeDog.price}</Text>
-                    </View>
-                  )}
-                </ImageBackground>
-              </TouchableOpacity>
+                  <ImageBackground
+                    source={require('../assets/images/mainbutton.png')}
+                    style={styles.buyBoard}
+                    resizeMode="stretch"
+                  >
+                    {isUnlocked ? (
+                      <Text style={styles.buyText}>Received</Text>
+                    ) : (
+                      <View style={styles.priceInline}>
+                        <Image
+                          source={imgBone}
+                          style={styles.priceBone}
+                          resizeMode="contain"
+                        />
+                        <Text style={styles.buyText}>{activeDog.price}</Text>
+                      </View>
+                    )}
+                  </ImageBackground>
+                </TouchableOpacity>
+              </Animated.View>
 
               <TouchableOpacity activeOpacity={0.85} onPress={nextDog}>
                 <ImageBackground
@@ -351,22 +370,24 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
 
                 <Text style={styles.productTitle}>Feed</Text>
 
-                <TouchableOpacity activeOpacity={0.85} onPress={buyFood}>
-                  <ImageBackground
-                    source={require('../assets/images/scoreboard.png')}
-                    style={styles.productPrice}
-                    resizeMode="stretch"
-                  >
-                    <Image
-                      source={imgBone}
-                      style={styles.priceBoneSmall}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.productPriceText}>
-                      {pad3(PRICE_FEED)}
-                    </Text>
-                  </ImageBackground>
-                </TouchableOpacity>
+                <Animated.View style={{ transform: [{ translateX: foodShakeX }] }}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={buyFood}>
+                    <ImageBackground
+                      source={require('../assets/images/scoreboard.png')}
+                      style={styles.productPrice}
+                      resizeMode="stretch"
+                    >
+                      <Image
+                        source={imgBone}
+                        style={styles.priceBoneSmall}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.productPriceText}>
+                        {pad3(PRICE_FEED)}
+                      </Text>
+                    </ImageBackground>
+                  </TouchableOpacity>
+                </Animated.View>
               </View>
             </LinearGradient>
 
@@ -393,22 +414,24 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
 
                 <Text style={styles.productTitle}>Water</Text>
 
-                <TouchableOpacity activeOpacity={0.85} onPress={buyWater}>
-                  <ImageBackground
-                    source={require('../assets/images/scoreboard.png')}
-                    style={styles.productPrice}
-                    resizeMode="stretch"
-                  >
-                    <Image
-                      source={imgBone}
-                      style={styles.priceBoneSmall}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.productPriceText}>
-                      {pad3(PRICE_WATER)}
-                    </Text>
-                  </ImageBackground>
-                </TouchableOpacity>
+                <Animated.View style={{ transform: [{ translateX: waterShakeX }] }}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={buyWater}>
+                    <ImageBackground
+                      source={require('../assets/images/scoreboard.png')}
+                      style={styles.productPrice}
+                      resizeMode="stretch"
+                    >
+                      <Image
+                        source={imgBone}
+                        style={styles.priceBoneSmall}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.productPriceText}>
+                        {pad3(PRICE_WATER)}
+                      </Text>
+                    </ImageBackground>
+                  </TouchableOpacity>
+                </Animated.View>
               </View>
             </LinearGradient>
           </View>

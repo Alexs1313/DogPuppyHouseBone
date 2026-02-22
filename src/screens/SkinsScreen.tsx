@@ -345,7 +345,7 @@ We are sure that next time you will definitely be lucky!`,
         setGuessResult('win');
         await AsyncStorage.setItem(STORAGE_GUESS_PENDING_RESULT, 'win');
 
-        Alert.alert('Congratulations!', `You received a skin for: ${dogId}`, [
+        Alert.alert('Congratulations!', `You received a new skin!`, [
           { text: 'OK', onPress: () => setTab('skins') },
         ]);
         return;

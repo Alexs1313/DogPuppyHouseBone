@@ -44,6 +44,8 @@ const STORAGE_TOTAL_BONES = 'TOTAL_BONES';
 
 const STORAGE_UNLOCKED_DOGS = 'UNLOCKED_DOGS';
 const STORAGE_SKIN_EQUIPPED = 'SKIN_EQUIPPED';
+const SPEED_BOOST_INTERVAL_MS = 7000;
+const SPEED_BOOST_STEP = 0.12;
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -128,6 +130,8 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
 
   const spawnIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const tickIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const speedBoostIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const speedMultiplierRef = useRef(1);
 
   const dogY = Math.max(0, fieldH - dogH - 18 * s);
 
@@ -162,12 +166,16 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
   const stopLoops = useCallback(() => {
     if (spawnIntervalRef.current) clearInterval(spawnIntervalRef.current);
     if (tickIntervalRef.current) clearInterval(tickIntervalRef.current);
+    if (speedBoostIntervalRef.current)
+      clearInterval(speedBoostIntervalRef.current);
     spawnIntervalRef.current = null;
     tickIntervalRef.current = null;
+    speedBoostIntervalRef.current = null;
   }, []);
 
   const resetGame = useCallback(() => {
     stopLoops();
+    speedMultiplierRef.current = 1;
     setItems([]);
     itemsRef.current = [];
     setSessionBones(0);
@@ -237,7 +245,7 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
 
     const w = type === 'bone' ? boneW : badW;
     const x = rand(8 * s, Math.max(8 * s, fieldW - w - 8 * s));
-    const speed = rand(2.3 * s, 4.6 * s);
+    const speed = rand(2.6 * s, 5.1 * s) * speedMultiplierRef.current;
 
     const item: FallingItem = {
       id: uid(),
@@ -286,7 +294,7 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
     let gotBad = 0;
 
     for (const it of itemsRef.current) {
-      const moved = { ...it, y: it.y + it.speed };
+      const moved = { ...it, y: it.y + it.speed * speedMultiplierRef.current };
 
       if (collide(moved)) {
         if (moved.type === 'bone') gotBone += 1;
@@ -316,8 +324,12 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
   useEffect(() => {
     if (!isRunning) return;
 
+    speedMultiplierRef.current = 1;
     spawnIntervalRef.current = setInterval(spawnItem, 650);
     tickIntervalRef.current = setInterval(tick, 16);
+    speedBoostIntervalRef.current = setInterval(() => {
+      speedMultiplierRef.current += SPEED_BOOST_STEP;
+    }, SPEED_BOOST_INTERVAL_MS);
 
     return () => stopLoops();
   }, [isRunning, spawnItem, stopLoops, tick]);

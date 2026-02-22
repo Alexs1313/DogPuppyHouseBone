@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   boardText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#FFFFFF',
     textAlign: 'center',
     fontFamily: 'Kanit-Regular',
