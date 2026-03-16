@@ -79,7 +79,7 @@ android {
 
     namespace "com.dogpuppyhousebone"
     defaultConfig {
-        applicationId "com.dogpuppyhousebone"
+        applicationId "com.doghousathepuppybon"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
