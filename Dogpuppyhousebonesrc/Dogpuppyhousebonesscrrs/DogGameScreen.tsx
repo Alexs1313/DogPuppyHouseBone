@@ -116,7 +116,7 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
     require('../assets/images/dog1.png'),
   );
 
-  const dogW = 130 * s;
+  const dogW = 131 * s;
   const dogH = 120 * s;
   const dogXRef = useRef((W0 - dogW) / 2);
   const dragStartX = useRef(0);
