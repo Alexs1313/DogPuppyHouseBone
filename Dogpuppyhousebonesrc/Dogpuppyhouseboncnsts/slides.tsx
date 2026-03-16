@@ -15,6 +15,12 @@ export const SLIDES = [
     title: 'Unlock Dogs & Skins',
     image: require('../assets/images/startedth.png'),
     text: 'Unlock new dogs and houses. Once a day, guess the house and win a special skin.',
+    button: 'Continue',
+  },
+  {
+    title: 'Stories from dogs',
+    image: require('../assets/images/startedfro.png'),
+    text: 'Open a section with warm and exciting stories from your four-legged friends.',
     button: 'Start',
   },
 ] as const;

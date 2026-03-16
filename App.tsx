@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import StackNavigation from './src/routes/StackNavigation';
+import StackNavigation from './Dogpuppyhousebonesrc/Dogpuppyhousebonerts/StackNavigation';
 
 const App: React.FC = () => {
   return (

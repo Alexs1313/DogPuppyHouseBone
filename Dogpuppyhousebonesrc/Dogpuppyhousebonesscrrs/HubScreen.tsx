@@ -1,17 +1,23 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Animated,
   Image,
   ImageBackground,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
   Dimensions,
 } from 'react-native';
-import Layout from '../components/Layout';
+import Layout from '../Dogpuppyhousebonecmpnts/Layout';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
 
 type DogId = 'dog-1' | 'dog-2' | 'dog-3' | 'dog-4';
 
@@ -104,7 +110,7 @@ const DogCard = React.memo(
       <Animated.View
         style={[styles.cardWrap, { transform: [{ translateX: cardShakeX }] }]}
       >
-        <TouchableOpacity activeOpacity={0.85} onPress={handlePress}>
+        <AnimatedPressable activeOpacity={0.85} onPress={handlePress}>
           <ImageBackground
             style={styles.cardBg}
             source={
@@ -115,7 +121,10 @@ const DogCard = React.memo(
             resizeMode="stretch"
           >
             <View
-              style={[styles.card, isSelected && unlocked && styles.cardSelected]}
+              style={[
+                styles.card,
+                isSelected && unlocked && styles.cardSelected,
+              ]}
             >
               {unlocked ? (
                 <>
@@ -179,7 +188,7 @@ const DogCard = React.memo(
               )}
             </View>
           </ImageBackground>
-        </TouchableOpacity>
+        </AnimatedPressable>
       </Animated.View>
     );
   },
@@ -229,6 +238,7 @@ const HomeScreen: React.FC = () => {
   const [selectedDogId, setSelectedDogId] = useState<DogId>('dog-1');
   const foodShakeX = useRef(new Animated.Value(0)).current;
   const waterShakeX = useRef(new Animated.Value(0)).current;
+  const cardEntrance = useRef(dogs.map(() => new Animated.Value(0))).current;
   const [cardFlash, setCardFlash] = useState<{
     dogId: DogId;
     kind: 'food' | 'water';
@@ -248,11 +258,31 @@ const HomeScreen: React.FC = () => {
     value.stopAnimation();
     value.setValue(0);
     Animated.sequence([
-      Animated.timing(value, { toValue: -6 * s, duration: 45, useNativeDriver: true }),
-      Animated.timing(value, { toValue: 6 * s, duration: 45, useNativeDriver: true }),
-      Animated.timing(value, { toValue: -4 * s, duration: 40, useNativeDriver: true }),
-      Animated.timing(value, { toValue: 4 * s, duration: 40, useNativeDriver: true }),
-      Animated.timing(value, { toValue: 0, duration: 35, useNativeDriver: true }),
+      Animated.timing(value, {
+        toValue: -6 * s,
+        duration: 45,
+        useNativeDriver: true,
+      }),
+      Animated.timing(value, {
+        toValue: 6 * s,
+        duration: 45,
+        useNativeDriver: true,
+      }),
+      Animated.timing(value, {
+        toValue: -4 * s,
+        duration: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(value, {
+        toValue: 4 * s,
+        duration: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(value, {
+        toValue: 0,
+        duration: 35,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
@@ -262,6 +292,20 @@ const HomeScreen: React.FC = () => {
     },
     [],
   );
+
+  const runCardsEntrance = useCallback(() => {
+    cardEntrance.forEach(v => v.setValue(0));
+    Animated.stagger(
+      120,
+      cardEntrance.map(v =>
+        Animated.timing(v, {
+          toValue: 1,
+          duration: 340,
+          useNativeDriver: true,
+        }),
+      ),
+    ).start();
+  }, [cardEntrance]);
 
   const loadFromStorage = useCallback(async () => {
     try {
@@ -300,7 +344,8 @@ const HomeScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       loadFromStorage();
-    }, [loadFromStorage]),
+      runCardsEntrance();
+    }, [loadFromStorage, runCardsEntrance]),
   );
 
   const selectedDogIndex = useMemo(
@@ -376,113 +421,85 @@ const HomeScreen: React.FC = () => {
 
   return (
     <Layout>
-      <ImageBackground
-        source={require('../assets/images/headerframe.png')}
-        style={styles.header}
-        resizeMode="stretch"
+      <View
+        style={{
+          flex: 1,
+          paddingBottom: 120,
+        }}
       >
-        <Text style={styles.headerText}>Home</Text>
-      </ImageBackground>
+        <ImageBackground
+          source={require('../assets/images/smallHead.png')}
+          style={styles.header}
+          resizeMode="stretch"
+        >
+          <Text style={styles.headerText}>Home</Text>
+        </ImageBackground>
 
-      <View style={styles.topCounters}>
-        <Animated.View style={{ transform: [{ translateX: foodShakeX }] }}>
-          <TouchableOpacity activeOpacity={0.85} onPress={feedSelectedDog}>
-            <ImageBackground
-              source={require('../assets/images/smallButton.png')}
-              style={styles.counterFrame}
-              resizeMode="stretch"
+        <View style={styles.topCounters}>
+          <Animated.View style={{ transform: [{ translateX: foodShakeX }] }}>
+            <AnimatedPressable activeOpacity={0.85} onPress={feedSelectedDog}>
+              <ImageBackground
+                source={require('../assets/images/smallButton.png')}
+                style={styles.counterFrame}
+                resizeMode="stretch"
+              >
+                <Text style={styles.counterText}>{foodCount}</Text>
+                <Image
+                  source={require('../assets/images/foodbowl.png')}
+                  style={styles.counterIcon}
+                  resizeMode="contain"
+                />
+              </ImageBackground>
+            </AnimatedPressable>
+          </Animated.View>
+
+          <Animated.View style={{ transform: [{ translateX: waterShakeX }] }}>
+            <AnimatedPressable activeOpacity={0.85} onPress={waterSelectedDog}>
+              <ImageBackground
+                source={require('../assets/images/smallButton.png')}
+                style={styles.counterFrame}
+                resizeMode="stretch"
+              >
+                <Text style={styles.counterText}>{waterCount}</Text>
+                <Image
+                  source={require('../assets/images/waterbowl.png')}
+                  style={styles.counterIcon}
+                  resizeMode="contain"
+                />
+              </ImageBackground>
+            </AnimatedPressable>
+          </Animated.View>
+        </View>
+
+        <View style={styles.grid}>
+          {dogs.map((dog, i) => (
+            <Animated.View
+              key={dog.id}
+              style={{
+                opacity: cardEntrance[i],
+                transform: [
+                  {
+                    translateY: cardEntrance[i].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [16, 0],
+                    }),
+                  },
+                ],
+              }}
             >
-              <Text style={styles.counterText}>{foodCount}</Text>
-              <Image
-                source={require('../assets/images/foodbowl.png')}
-                style={styles.counterIcon}
-                resizeMode="contain"
+              <DogCard
+                dog={dog}
+                unlocked={isUnlocked(dog.id)}
+                index={i}
+                isSelected={dog.id === selectedDogId}
+                flashKind={
+                  cardFlash && cardFlash.dogId === dog.id ? cardFlash.kind : null
+                }
+                onPress={selectDog}
               />
-            </ImageBackground>
-          </TouchableOpacity>
-        </Animated.View>
-
-        <Animated.View style={{ transform: [{ translateX: waterShakeX }] }}>
-          <TouchableOpacity activeOpacity={0.85} onPress={waterSelectedDog}>
-            <ImageBackground
-              source={require('../assets/images/smallButton.png')}
-              style={styles.counterFrame}
-              resizeMode="stretch"
-            >
-              <Text style={styles.counterText}>{waterCount}</Text>
-              <Image
-                source={require('../assets/images/waterbowl.png')}
-                style={styles.counterIcon}
-                resizeMode="contain"
-              />
-            </ImageBackground>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-
-      <View style={styles.grid}>
-        {dogs.map((dog, i) => (
-          <DogCard
-            key={dog.id}
-            dog={dog}
-            unlocked={isUnlocked(dog.id)}
-            index={i}
-            isSelected={dog.id === selectedDogId}
-            flashKind={
-              cardFlash && cardFlash.dogId === dog.id ? cardFlash.kind : null
-            }
-            onPress={selectDog}
-          />
-        ))}
-      </View>
-
-      <View style={styles.bottomBar}>
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => navigation.navigate('MarketScreen')}
-        >
-          <ImageBackground
-            source={require('../assets/images/smallButton.png')}
-            style={styles.bottomSmallBtn}
-            resizeMode="stretch"
-          >
-            <Image
-              source={require('../assets/images/market.png')}
-              style={styles.bottomIcon}
-              resizeMode="contain"
-            />
-          </ImageBackground>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => navigation.navigate('DogGameScreen')}
-        >
-          <ImageBackground
-            source={require('../assets/images/mainbutton.png')}
-            style={styles.bottomCenter}
-            resizeMode="stretch"
-          >
-            <Text style={styles.bottomText}>Game</Text>
-          </ImageBackground>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => navigation.navigate('SkinsScreen')}
-        >
-          <ImageBackground
-            source={require('../assets/images/smallButton.png')}
-            style={styles.bottomSmallBtn}
-            resizeMode="stretch"
-          >
-            <Image
-              source={require('../assets/images/collection.png')}
-              style={styles.bottomIcon}
-              resizeMode="contain"
-            />
-          </ImageBackground>
-        </TouchableOpacity>
+            </Animated.View>
+          ))}
+        </View>
       </View>
     </Layout>
   );
@@ -494,8 +511,8 @@ const styles = StyleSheet.create({
   header: {
     alignSelf: 'center',
     marginTop: 40 * s,
-    width: 330 * s,
-    height: 90 * s,
+    width: 284 * s,
+    height: 102 * s,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -503,7 +520,7 @@ const styles = StyleSheet.create({
     fontSize: 26 * s,
     color: '#1b0d05',
     fontFamily: 'Kanit-SemiBold',
-    marginTop: -10 * s,
+    marginTop: -11 * s,
   },
   topCounters: {
     alignSelf: 'center',
@@ -531,7 +548,7 @@ const styles = StyleSheet.create({
   },
   grid: {
     alignSelf: 'center',
-    marginTop: 20 * s,
+    marginTop: 10 * s,
     width: 340 * s,
     height: 510 * s,
     flexDirection: 'row',
@@ -542,11 +559,11 @@ const styles = StyleSheet.create({
   },
   cardWrap: {
     width: 160 * s,
-    height: 200 * s,
+    height: 220 * s,
   },
   cardBg: {
     width: 160 * s,
-    height: 200 * s,
+    height: 160 * s,
     justifyContent: 'flex-start',
   },
   card: {
@@ -577,7 +594,7 @@ const styles = StyleSheet.create({
     width: '88%',
     gap: 6 * s,
     position: 'absolute',
-    top: 200 * s,
+    top: 170 * s,
   },
   barRow: {
     flexDirection: 'row',

@@ -1,18 +1,24 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Animated,
   Image,
   ImageBackground,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
   Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Layout from '../components/Layout';
+import Layout from '../Dogpuppyhousebonecmpnts/Layout';
 import LinearGradient from 'react-native-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
 
 const { width: W, height: H } = Dimensions.get('window');
 const isLandscape = W > H;
@@ -78,6 +84,9 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
   const foodShakeX = useRef(new Animated.Value(0)).current;
   const waterShakeX = useRef(new Animated.Value(0)).current;
   const dogShakeX = useRef(new Animated.Value(0)).current;
+  const productsEntrance = useRef([new Animated.Value(0), new Animated.Value(0)])
+    .current;
+  const dogsEntrance = useRef([new Animated.Value(0), new Animated.Value(0)]).current;
 
   const activeDog = useMemo(() => DOGS[dogIndex], [dogIndex]);
   const isUnlocked = useMemo(
@@ -135,11 +144,31 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
     value.stopAnimation();
     value.setValue(0);
     Animated.sequence([
-      Animated.timing(value, { toValue: -6 * s, duration: 45, useNativeDriver: true }),
-      Animated.timing(value, { toValue: 6 * s, duration: 45, useNativeDriver: true }),
-      Animated.timing(value, { toValue: -4 * s, duration: 40, useNativeDriver: true }),
-      Animated.timing(value, { toValue: 4 * s, duration: 40, useNativeDriver: true }),
-      Animated.timing(value, { toValue: 0, duration: 35, useNativeDriver: true }),
+      Animated.timing(value, {
+        toValue: -6 * s,
+        duration: 45,
+        useNativeDriver: true,
+      }),
+      Animated.timing(value, {
+        toValue: 6 * s,
+        duration: 45,
+        useNativeDriver: true,
+      }),
+      Animated.timing(value, {
+        toValue: -4 * s,
+        duration: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(value, {
+        toValue: 4 * s,
+        duration: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(value, {
+        toValue: 0,
+        duration: 35,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
@@ -194,6 +223,31 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
     setDogIndex(i => (i + 1) % DOGS.length);
   }, []);
 
+  const runMarketEntrance = useCallback(() => {
+    const values = tab === 'products' ? productsEntrance : dogsEntrance;
+    values.forEach(v => v.setValue(0));
+    Animated.stagger(
+      130,
+      values.map(v =>
+        Animated.timing(v, {
+          toValue: 1,
+          duration: 340,
+          useNativeDriver: true,
+        }),
+      ),
+    ).start();
+  }, [dogsEntrance, productsEntrance, tab]);
+
+  useFocusEffect(
+    useCallback(() => {
+      runMarketEntrance();
+    }, [runMarketEntrance]),
+  );
+
+  useEffect(() => {
+    runMarketEntrance();
+  }, [runMarketEntrance, tab]);
+
   const imgHeader = require('../assets/images/smallHead.png');
   const imgSmallBtn = require('../assets/images/smallButton.png');
   const imgScoreBoard = require('../assets/images/scoreboard.png');
@@ -213,7 +267,7 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
         style={{
           flex: 1,
           paddingTop: 50 * s,
-          paddingBottom: 12 * s,
+          paddingBottom: 120,
           padding: 18 * s,
         }}
       >
@@ -226,22 +280,6 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
             justifyContent: 'center',
           }}
         >
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => navigation.goBack()}
-          >
-            <ImageBackground
-              source={imgSmallBtn}
-              style={styles.closeBtnBg}
-              resizeMode="stretch"
-            >
-              <Image
-                source={require('../assets/images/close.png')}
-                style={styles.closeText}
-              />
-            </ImageBackground>
-          </TouchableOpacity>
-
           <ImageBackground
             source={imgHeader}
             style={styles.header}
@@ -264,181 +302,8 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
           <Text style={styles.balanceText}>{pad3(bones)}</Text>
         </ImageBackground>
 
-        {tab === 'dogs' ? (
-          <View style={styles.dogsWrap}>
-            <View style={styles.cardOuter}>
-              <LinearGradient
-                colors={['#EB924D', '#963B34']}
-                style={{ borderRadius: 19 * s }}
-              >
-                <View style={styles.cardBg}>
-                  <Image
-                    source={activeDog.image}
-                    style={styles.dogImage}
-                    resizeMode="contain"
-                  />
-
-                  <Image
-                    source={require('../assets/images/markehouse.png')}
-                    style={{
-                      position: 'absolute',
-                    }}
-                  />
-                </View>
-              </LinearGradient>
-            </View>
-
-            <View style={styles.priceRow}>
-              <TouchableOpacity activeOpacity={0.85} onPress={prevDog}>
-                <ImageBackground
-                  source={imgSmallBtn}
-                  style={styles.arrowBtn}
-                  resizeMode="stretch"
-                >
-                  {imgArrowLeft ? (
-                    <Image source={imgArrowRight} resizeMode="contain" />
-                  ) : (
-                    <Text style={styles.arrowText}>←</Text>
-                  )}
-                </ImageBackground>
-              </TouchableOpacity>
-
-              <Animated.View style={{ transform: [{ translateX: dogShakeX }] }}>
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  onPress={buyDog}
-                  disabled={isUnlocked || activeDog.price === 0}
-                >
-                  <ImageBackground
-                    source={require('../assets/images/mainbutton.png')}
-                    style={styles.buyBoard}
-                    resizeMode="stretch"
-                  >
-                    {isUnlocked ? (
-                      <Text style={styles.buyText}>Received</Text>
-                    ) : (
-                      <View style={styles.priceInline}>
-                        <Image
-                          source={imgBone}
-                          style={styles.priceBone}
-                          resizeMode="contain"
-                        />
-                        <Text style={styles.buyText}>{activeDog.price}</Text>
-                      </View>
-                    )}
-                  </ImageBackground>
-                </TouchableOpacity>
-              </Animated.View>
-
-              <TouchableOpacity activeOpacity={0.85} onPress={nextDog}>
-                <ImageBackground
-                  source={imgSmallBtn}
-                  style={styles.arrowBtn}
-                  resizeMode="stretch"
-                >
-                  {imgArrowRight ? (
-                    <Image source={imgArrowLeft} resizeMode="contain" />
-                  ) : (
-                    <Text style={styles.arrowText}>→</Text>
-                  )}
-                </ImageBackground>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.productsWrap}>
-            <LinearGradient
-              colors={['#EB924D', '#963B34']}
-              style={{
-                borderWidth: 1,
-                borderColor: '#59173E',
-                borderRadius: 12 * s,
-              }}
-            >
-              <View style={styles.productRow}>
-                <ImageBackground
-                  source={imgSmallBtn}
-                  style={styles.productIconBox}
-                  resizeMode="stretch"
-                >
-                  <Image
-                    source={imgFoodIcon}
-                    style={styles.productIcon}
-                    resizeMode="contain"
-                  />
-                </ImageBackground>
-
-                <Text style={styles.productTitle}>Feed</Text>
-
-                <Animated.View style={{ transform: [{ translateX: foodShakeX }] }}>
-                  <TouchableOpacity activeOpacity={0.85} onPress={buyFood}>
-                    <ImageBackground
-                      source={require('../assets/images/scoreboard.png')}
-                      style={styles.productPrice}
-                      resizeMode="stretch"
-                    >
-                      <Image
-                        source={imgBone}
-                        style={styles.priceBoneSmall}
-                        resizeMode="contain"
-                      />
-                      <Text style={styles.productPriceText}>
-                        {pad3(PRICE_FEED)}
-                      </Text>
-                    </ImageBackground>
-                  </TouchableOpacity>
-                </Animated.View>
-              </View>
-            </LinearGradient>
-
-            <LinearGradient
-              colors={['#EB924D', '#963B34']}
-              style={{
-                borderWidth: 1,
-                borderColor: '#59173E',
-                borderRadius: 12 * s,
-              }}
-            >
-              <View style={styles.productRow}>
-                <ImageBackground
-                  source={imgSmallBtn}
-                  style={styles.productIconBox}
-                  resizeMode="stretch"
-                >
-                  <Image
-                    source={imgWaterIcon}
-                    style={styles.productIcon}
-                    resizeMode="contain"
-                  />
-                </ImageBackground>
-
-                <Text style={styles.productTitle}>Water</Text>
-
-                <Animated.View style={{ transform: [{ translateX: waterShakeX }] }}>
-                  <TouchableOpacity activeOpacity={0.85} onPress={buyWater}>
-                    <ImageBackground
-                      source={require('../assets/images/scoreboard.png')}
-                      style={styles.productPrice}
-                      resizeMode="stretch"
-                    >
-                      <Image
-                        source={imgBone}
-                        style={styles.priceBoneSmall}
-                        resizeMode="contain"
-                      />
-                      <Text style={styles.productPriceText}>
-                        {pad3(PRICE_WATER)}
-                      </Text>
-                    </ImageBackground>
-                  </TouchableOpacity>
-                </Animated.View>
-              </View>
-            </LinearGradient>
-          </View>
-        )}
-
         <View style={styles.tabsRow}>
-          <TouchableOpacity
+          <AnimatedPressable
             activeOpacity={0.85}
             onPress={() => setTab('products')}
           >
@@ -461,9 +326,12 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
                 Products
               </Text>
             </ImageBackground>
-          </TouchableOpacity>
+          </AnimatedPressable>
 
-          <TouchableOpacity activeOpacity={0.85} onPress={() => setTab('dogs')}>
+          <AnimatedPressable
+            activeOpacity={0.85}
+            onPress={() => setTab('dogs')}
+          >
             <ImageBackground
               source={imgTabDogs}
               style={[
@@ -483,8 +351,237 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
                 Dogs
               </Text>
             </ImageBackground>
-          </TouchableOpacity>
+          </AnimatedPressable>
         </View>
+
+        {tab === 'dogs' ? (
+          <View style={styles.dogsWrap}>
+            <Animated.View
+              style={{
+                opacity: dogsEntrance[0],
+                transform: [
+                  {
+                    translateY: dogsEntrance[0].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [16, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <View style={styles.cardOuter}>
+                <LinearGradient
+                  colors={['#EB924D', '#963B34']}
+                  style={{ borderRadius: 19 * s }}
+                >
+                  <View style={styles.cardBg}>
+                    <Image
+                      source={activeDog.image}
+                      style={styles.dogImage}
+                      resizeMode="contain"
+                    />
+
+                    <Image
+                      source={require('../assets/images/markehouse.png')}
+                      style={{
+                        position: 'absolute',
+                      }}
+                    />
+                  </View>
+                </LinearGradient>
+              </View>
+            </Animated.View>
+
+            <Animated.View
+              style={{
+                opacity: dogsEntrance[1],
+                transform: [
+                  {
+                    translateY: dogsEntrance[1].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [16, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <View style={styles.priceRow}>
+              <AnimatedPressable activeOpacity={0.85} onPress={prevDog}>
+                <ImageBackground
+                  source={imgSmallBtn}
+                  style={styles.arrowBtn}
+                  resizeMode="stretch"
+                >
+                  {imgArrowLeft ? (
+                    <Image source={imgArrowRight} resizeMode="contain" />
+                  ) : (
+                    <Text style={styles.arrowText}>←</Text>
+                  )}
+                </ImageBackground>
+              </AnimatedPressable>
+
+              <Animated.View style={{ transform: [{ translateX: dogShakeX }] }}>
+                <AnimatedPressable
+                  activeOpacity={0.85}
+                  onPress={buyDog}
+                  disabled={isUnlocked || activeDog.price === 0}
+                >
+                  <ImageBackground
+                    source={require('../assets/images/mainbutton.png')}
+                    style={styles.buyBoard}
+                    resizeMode="stretch"
+                  >
+                    {isUnlocked ? (
+                      <Text style={styles.buyText}>Received</Text>
+                    ) : (
+                      <View style={styles.priceInline}>
+                        <Image
+                          source={imgBone}
+                          style={styles.priceBone}
+                          resizeMode="contain"
+                        />
+                        <Text style={styles.buyText}>{activeDog.price}</Text>
+                      </View>
+                    )}
+                  </ImageBackground>
+                </AnimatedPressable>
+              </Animated.View>
+
+              <AnimatedPressable activeOpacity={0.85} onPress={nextDog}>
+                <ImageBackground
+                  source={imgSmallBtn}
+                  style={styles.arrowBtn}
+                  resizeMode="stretch"
+                >
+                  {imgArrowRight ? (
+                    <Image source={imgArrowLeft} resizeMode="contain" />
+                  ) : (
+                    <Text style={styles.arrowText}>→</Text>
+                  )}
+                </ImageBackground>
+              </AnimatedPressable>
+              </View>
+            </Animated.View>
+          </View>
+        ) : (
+          <View style={styles.productsWrap}>
+            <Animated.View
+              style={{
+                opacity: productsEntrance[0],
+                transform: [
+                  {
+                    translateY: productsEntrance[0].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [16, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <LinearGradient
+                colors={['#EB924D', '#963B34']}
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#59173E',
+                  borderRadius: 12 * s,
+                }}
+              >
+                <View style={styles.productRow}>
+                  <ImageBackground
+                    source={imgSmallBtn}
+                    style={styles.productIconBox}
+                    resizeMode="stretch"
+                  >
+                    <Image
+                      source={imgFoodIcon}
+                      style={styles.productIcon}
+                      resizeMode="contain"
+                    />
+                  </ImageBackground>
+
+                  <Text style={styles.productTitle}>Feed</Text>
+
+                  <Animated.View style={{ transform: [{ translateX: foodShakeX }] }}>
+                    <AnimatedPressable activeOpacity={0.85} onPress={buyFood}>
+                      <ImageBackground
+                        source={require('../assets/images/scoreboard.png')}
+                        style={styles.productPrice}
+                        resizeMode="stretch"
+                      >
+                        <Image
+                          source={imgBone}
+                          style={styles.priceBoneSmall}
+                          resizeMode="contain"
+                        />
+                        <Text style={styles.productPriceText}>
+                          {pad3(PRICE_FEED)}
+                        </Text>
+                      </ImageBackground>
+                    </AnimatedPressable>
+                  </Animated.View>
+                </View>
+              </LinearGradient>
+            </Animated.View>
+
+            <Animated.View
+              style={{
+                opacity: productsEntrance[1],
+                transform: [
+                  {
+                    translateY: productsEntrance[1].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [16, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <LinearGradient
+                colors={['#EB924D', '#963B34']}
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#59173E',
+                  borderRadius: 12 * s,
+                }}
+              >
+                <View style={styles.productRow}>
+                  <ImageBackground
+                    source={imgSmallBtn}
+                    style={styles.productIconBox}
+                    resizeMode="stretch"
+                  >
+                    <Image
+                      source={imgWaterIcon}
+                      style={styles.productIcon}
+                      resizeMode="contain"
+                    />
+                  </ImageBackground>
+
+                  <Text style={styles.productTitle}>Water</Text>
+
+                  <Animated.View style={{ transform: [{ translateX: waterShakeX }] }}>
+                    <AnimatedPressable activeOpacity={0.85} onPress={buyWater}>
+                      <ImageBackground
+                        source={require('../assets/images/scoreboard.png')}
+                        style={styles.productPrice}
+                        resizeMode="stretch"
+                      >
+                        <Image
+                          source={imgBone}
+                          style={styles.priceBoneSmall}
+                          resizeMode="contain"
+                        />
+                        <Text style={styles.productPriceText}>
+                          {pad3(PRICE_WATER)}
+                        </Text>
+                      </ImageBackground>
+                    </AnimatedPressable>
+                  </Animated.View>
+                </View>
+              </LinearGradient>
+            </Animated.View>
+          </View>
+        )}
       </View>
     </Layout>
   );
@@ -514,7 +611,7 @@ const styles = StyleSheet.create({
     fontSize: 26 * s,
     color: '#1b0d05',
     fontFamily: 'Kanit-SemiBold',
-    marginTop: -6 * s,
+    marginTop: -11 * s,
   },
   balanceBoard: {
     alignSelf: 'center',
@@ -534,10 +631,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Kanit-Medium',
   },
   dogsWrap: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 18 * s,
+    marginTop: 20,
   },
   cardOuter: {
     width: 290 * s,
@@ -592,10 +689,10 @@ const styles = StyleSheet.create({
   },
   priceBone: { width: 34 * s, height: 24 * s },
   productsWrap: {
-    flex: 1,
     paddingHorizontal: 18 * s,
     justifyContent: 'center',
     gap: 52 * s,
+    marginTop: 50,
   },
   productRow: {
     width: '100%',
@@ -649,9 +746,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 18 * s,
-    marginBottom: 24 * s,
     gap: 14 * s,
-    marginTop: 20,
+    marginTop: 2,
   },
   tabBtn: {
     width: (W - 72 * s) / 2,

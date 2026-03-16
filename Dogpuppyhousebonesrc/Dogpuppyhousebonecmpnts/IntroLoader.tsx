@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Image, ScrollView, ImageBackground } from 'react-native';
+import { View, Animated, ScrollView, ImageBackground } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 type RootStackParamList = {
@@ -9,19 +9,38 @@ type RootStackParamList = {
 const IntroLoader: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     timerRef.current = setTimeout(() => {
-      navigation.navigate('GetStartedScreen');
+      navigation.replace('GetStartedScreen');
     }, 6000);
 
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1.06,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    pulseLoop.start();
+
     return () => {
+      pulseLoop.stop();
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
     };
-  }, [navigation]);
+  }, [navigation, pulse]);
 
   return (
     <ImageBackground
@@ -40,9 +59,14 @@ const IntroLoader: React.FC = () => {
             alignItems: 'center',
           }}
         >
-          <Image
+          <Animated.Image
             source={require('../assets/images/ioslogo.png')}
-            style={{ width: 329, height: 329, borderRadius: 32 }}
+            style={{
+              width: 329,
+              height: 329,
+              borderRadius: 32,
+              transform: [{ scale: pulse }],
+            }}
           />
         </View>
       </ScrollView>

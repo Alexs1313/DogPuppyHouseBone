@@ -13,11 +13,10 @@ import {
   PanResponder,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Layout from '../components/Layout';
+import Layout from '../Dogpuppyhousebonecmpnts/Layout';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Orientation from 'react-native-orientation-locker';
 
@@ -101,11 +100,11 @@ const pickRandom = <T,>(arr: T[]) =>
   arr[Math.floor(Math.random() * arr.length)];
 
 const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
-  const [items, setItems] = useState<FallingItem[]>([]);
+  const [fallingTrash, setFallingTrash] = useState<FallingItem[]>([]);
   const itemsRef = useRef<FallingItem[]>([]);
   const [sessionBones, setSessionBones] = useState(0);
   const [strikes, setStrikes] = useState(0);
-  const [isRunning, setIsRunning] = useState(true);
+  const [isRunning, setIsRunning] = useState(false);
   const [totalBones, setTotalBones] = useState<number>(0);
 
   const navigation = useNavigation();
@@ -133,7 +132,7 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
   const speedBoostIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const speedMultiplierRef = useRef(1);
 
-  const dogY = Math.max(0, fieldH - dogH - 18 * s);
+  const dogY = Math.max(0, fieldH - dogH - (18 * s + 110));
 
   useEffect(() => {
     (async () => {
@@ -176,20 +175,32 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
   const resetGame = useCallback(() => {
     stopLoops();
     speedMultiplierRef.current = 1;
-    setItems([]);
+    setFallingTrash([]);
     itemsRef.current = [];
     setSessionBones(0);
     setStrikes(0);
     setIsRunning(true);
   }, [stopLoops]);
 
+  const stopGameSession = useCallback(() => {
+    stopLoops();
+    speedMultiplierRef.current = 1;
+    setIsRunning(false);
+    setFallingTrash([]);
+    itemsRef.current = [];
+    setSessionBones(0);
+    setStrikes(0);
+  }, [stopLoops]);
+
   useFocusEffect(
     useCallback(() => {
       Orientation.lockToPortrait();
+      resetGame();
       return () => {
+        stopGameSession();
         Orientation.unlockAllOrientations();
       };
-    }, []),
+    }, [resetGame, stopGameSession]),
   );
 
   const saveBonesAndAlert = useCallback(
@@ -256,7 +267,7 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
     };
 
     itemsRef.current = [item, ...itemsRef.current].slice(0, 18);
-    setItems(itemsRef.current);
+    setFallingTrash(itemsRef.current);
   }, [badW, boneW, fieldW]);
 
   const collide = useCallback(
@@ -318,7 +329,7 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
     }
 
     itemsRef.current = nextItems;
-    setItems(nextItems);
+    setFallingTrash(nextItems);
   }, [collide, endGame, fieldH]);
 
   useEffect(() => {
@@ -404,19 +415,6 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
             justifyContent: 'center',
           }}
         >
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => navigation.goBack()}
-          >
-            <ImageBackground
-              source={require('../assets/images/smallButton.png')}
-              style={styles.closeBtnBg}
-              resizeMode="stretch"
-            >
-              <Image source={require('../assets/images/close.png')} />
-            </ImageBackground>
-          </TouchableOpacity>
-
           <ImageBackground
             source={require('../assets/images/smallHead.png')}
             style={styles.header}
@@ -455,7 +453,7 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
             );
           }}
         >
-          {items.map(renderItem)}
+          {fallingTrash.map(renderItem)}
 
           <View
             style={[
@@ -497,7 +495,7 @@ const styles = StyleSheet.create({
     fontSize: 26 * s,
     color: '#1b0d05',
     fontFamily: 'Kanit-SemiBold',
-    marginTop: -6 * s,
+    marginTop: -11 * s,
   },
   scoreBoard: {
     alignSelf: 'center',

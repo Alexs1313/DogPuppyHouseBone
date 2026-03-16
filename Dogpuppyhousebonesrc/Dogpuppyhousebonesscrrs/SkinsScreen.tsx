@@ -1,19 +1,26 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Alert,
+  Animated,
   Dimensions,
   Image,
   ImageBackground,
   Share,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Layout from '../components/Layout';
-import { useNavigation } from '@react-navigation/native';
+import Layout from '../Dogpuppyhousebonecmpnts/Layout';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
+import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
 
 const { width: W, height: H } = Dimensions.get('window');
 const isLandscape = W > H;
@@ -138,7 +145,7 @@ const ensureEquipped = (v: string | null): EquippedMap => {
 };
 
 const SkinsScreen: React.FC<{ onClose?: () => void }> = ({}) => {
-  const [tab, setTab] = useState<Tab>('guess');
+  const [tab, setTab] = useState<Tab>('skins');
 
   const [owned, setOwned] = useState<OwnedSkinsMap>({
     'dog-1': ['base'],
@@ -168,6 +175,11 @@ const SkinsScreen: React.FC<{ onClose?: () => void }> = ({}) => {
   const [correctIndex, setCorrectIndex] = useState<number | null>(null);
   const [activeGuessDog, setActiveGuessDog] = useState<DogId>('dog-1');
   const [tick, setTick] = useState(0);
+  const stripEntrance = useRef(DOGS.map(() => new Animated.Value(0))).current;
+  const skinsMainEntrance = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
 
   const [guessResult, setGuessResult] = useState<GuessResult>('playing');
 
@@ -252,6 +264,40 @@ const SkinsScreen: React.FC<{ onClose?: () => void }> = ({}) => {
     const id = setInterval(() => setTick(t => t + 1), 1000);
     return () => clearInterval(id);
   }, []);
+
+  const runSkinsEntrance = useCallback(() => {
+    stripEntrance.forEach(v => v.setValue(0));
+    skinsMainEntrance.forEach(v => v.setValue(0));
+
+    Animated.sequence([
+      Animated.stagger(
+        100,
+        stripEntrance.map(v =>
+          Animated.timing(v, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ),
+      ),
+      Animated.stagger(
+        120,
+        skinsMainEntrance.map(v =>
+          Animated.timing(v, {
+            toValue: 1,
+            duration: 320,
+            useNativeDriver: true,
+          }),
+        ),
+      ),
+    ]).start();
+  }, [skinsMainEntrance, stripEntrance]);
+
+  useFocusEffect(
+    useCallback(() => {
+      runSkinsEntrance();
+    }, [runSkinsEntrance]),
+  );
 
   const hasAltForDog = useMemo(
     () => (owned[selectedDogId] || ['base']).includes('alt'),
@@ -385,7 +431,7 @@ We are sure that next time you will definitely be lucky!`,
         style={{
           flex: 1,
           paddingTop: 50 * s,
-          paddingBottom: 12 * s,
+          paddingBottom: 120,
           padding: 18 * s,
         }}
       >
@@ -398,19 +444,6 @@ We are sure that next time you will definitely be lucky!`,
             justifyContent: 'center',
           }}
         >
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => navigation.goBack()}
-          >
-            <ImageBackground
-              source={imgSmallBtn}
-              style={styles.closeBtnBg}
-              resizeMode="stretch"
-            >
-              <Image source={require('../assets/images/close.png')} />
-            </ImageBackground>
-          </TouchableOpacity>
-
           <ImageBackground
             source={imgHeader}
             style={styles.header}
@@ -426,79 +459,121 @@ We are sure that next time you will definitely be lucky!`,
               {DOGS.map((d, i) => {
                 const active = i === selectedDogIndex;
                 return (
-                  <TouchableOpacity
+                  <Animated.View
                     key={d.id}
-                    activeOpacity={0.85}
-                    onPress={() => setSelectedDogIndex(i)}
-                    style={[styles.stripItem, active && styles.stripActive]}
+                    style={{
+                      opacity: stripEntrance[i],
+                      transform: [
+                        {
+                          translateY: stripEntrance[i].interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [14, 0],
+                          }),
+                        },
+                      ],
+                    }}
                   >
-                    <Image source={d.thumb} style={styles.stripImg} />
-                  </TouchableOpacity>
+                    <AnimatedPressable
+                      activeOpacity={0.85}
+                      onPress={() => setSelectedDogIndex(i)}
+                      style={[styles.stripItem, active && styles.stripActive]}
+                    >
+                      <Image source={d.thumb} style={styles.stripImg} />
+                    </AnimatedPressable>
+                  </Animated.View>
                 );
               })}
             </View>
 
-            <View style={styles.bigCardOuter}>
-              <LinearGradient
-                colors={['#EB924D', '#963B34']}
-                style={{ borderRadius: 19 * s }}
-              >
-                <View style={styles.bigCard}>
-                  <Image
-                    source={
-                      selectedDog.skins[hasAltForDog ? selectedSkin : 'base']
-                    }
-                    style={styles.bigDog}
-                    resizeMode="contain"
-                  />
-
-                  <Image
-                    source={require('../assets/images/markehouse.png')}
-                    style={{ position: 'absolute' }}
-                  />
-                </View>
-              </LinearGradient>
-            </View>
-
-            <View style={styles.actionRow}>
-              {hasAltForDog ? (
-                <TouchableOpacity activeOpacity={0.85} onPress={prevSkin}>
-                  <ImageBackground
-                    source={imgSmallBtn}
-                    style={styles.arrowBtn}
-                    resizeMode="stretch"
-                  >
-                    <Text style={styles.arrowText}>←</Text>
-                  </ImageBackground>
-                </TouchableOpacity>
-              ) : (
-                <View style={{ width: 70 * s, height: 70 * s }} />
-              )}
-
-              <TouchableOpacity activeOpacity={0.85} onPress={dressSelected}>
-                <ImageBackground
-                  source={imgMainBtn}
-                  style={styles.actionBtn}
-                  resizeMode="stretch"
+            <Animated.View
+              style={{
+                opacity: skinsMainEntrance[0],
+                transform: [
+                  {
+                    translateY: skinsMainEntrance[0].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [16, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <View style={styles.bigCardOuter}>
+                <LinearGradient
+                  colors={['#EB924D', '#963B34']}
+                  style={{ borderRadius: 19 * s }}
                 >
-                  <Text style={styles.actionText}>Dressed</Text>
-                </ImageBackground>
-              </TouchableOpacity>
+                  <View style={styles.bigCard}>
+                    <Image
+                      source={
+                        selectedDog.skins[hasAltForDog ? selectedSkin : 'base']
+                      }
+                      style={styles.bigDog}
+                      resizeMode="contain"
+                    />
 
-              {hasAltForDog ? (
-                <TouchableOpacity activeOpacity={0.85} onPress={nextSkin}>
+                    <Image
+                      source={require('../assets/images/markehouse.png')}
+                      style={{ position: 'absolute' }}
+                    />
+                  </View>
+                </LinearGradient>
+              </View>
+            </Animated.View>
+
+            <Animated.View
+              style={{
+                opacity: skinsMainEntrance[1],
+                transform: [
+                  {
+                    translateY: skinsMainEntrance[1].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [16, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <View style={styles.actionRow}>
+                {hasAltForDog ? (
+                  <AnimatedPressable activeOpacity={0.85} onPress={prevSkin}>
+                    <ImageBackground
+                      source={imgSmallBtn}
+                      style={styles.arrowBtn}
+                      resizeMode="stretch"
+                    >
+                      <Text style={styles.arrowText}>←</Text>
+                    </ImageBackground>
+                  </AnimatedPressable>
+                ) : (
+                  <View style={{ width: 70 * s, height: 70 * s }} />
+                )}
+
+                <AnimatedPressable activeOpacity={0.85} onPress={dressSelected}>
                   <ImageBackground
-                    source={imgSmallBtn}
-                    style={styles.arrowBtn}
+                    source={imgMainBtn}
+                    style={styles.actionBtn}
                     resizeMode="stretch"
                   >
-                    <Text style={styles.arrowText}>→</Text>
+                    <Text style={styles.actionText}>Dressed</Text>
                   </ImageBackground>
-                </TouchableOpacity>
-              ) : (
-                <View style={{ width: 70 * s, height: 70 * s }} />
-              )}
-            </View>
+                </AnimatedPressable>
+
+                {hasAltForDog ? (
+                  <AnimatedPressable activeOpacity={0.85} onPress={nextSkin}>
+                    <ImageBackground
+                      source={imgSmallBtn}
+                      style={styles.arrowBtn}
+                      resizeMode="stretch"
+                    >
+                      <Text style={styles.arrowText}>→</Text>
+                    </ImageBackground>
+                  </AnimatedPressable>
+                ) : (
+                  <View style={{ width: 70 * s, height: 70 * s }} />
+                )}
+              </View>
+            </Animated.View>
           </View>
         ) : (
           <View style={{ flex: 1 }}>
@@ -555,7 +630,7 @@ We are sure that next time you will definitely be lucky!`,
                   </View>
                 </ImageBackground>
 
-                <TouchableOpacity
+                <AnimatedPressable
                   activeOpacity={0.85}
                   onPress={() => {
                     shareEmptyResult();
@@ -583,7 +658,7 @@ We are sure that next time you will definitely be lucky!`,
                       Share
                     </Text>
                   </ImageBackground>
-                </TouchableOpacity>
+                </AnimatedPressable>
               </View>
             ) : (
               <>
@@ -612,7 +687,7 @@ We are sure that next time you will definitely be lucky!`,
                 {canPlay && (
                   <View style={styles.grid}>
                     {Array.from({ length: GRID }).map((_, idx) => (
-                      <TouchableOpacity
+                      <AnimatedPressable
                         key={idx}
                         activeOpacity={0.9}
                         onPress={() => onPickCell(idx)}
@@ -624,7 +699,7 @@ We are sure that next time you will definitely be lucky!`,
                           style={styles.cellBg}
                           resizeMode="stretch"
                         />
-                      </TouchableOpacity>
+                      </AnimatedPressable>
                     ))}
                   </View>
                 )}
@@ -632,58 +707,6 @@ We are sure that next time you will definitely be lucky!`,
             )}
           </View>
         )}
-
-        <View style={styles.tabsRow}>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => setTab('guess')}
-          >
-            <ImageBackground
-              source={require('../assets/images/mainbutton.png')}
-              style={[
-                styles.tabBtn,
-                tab === 'guess' ? styles.tabActive : styles.tabInactive,
-              ]}
-              resizeMode="stretch"
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  tab === 'guess'
-                    ? styles.tabTextActive
-                    : styles.tabTextInactive,
-                ]}
-              >
-                Guess where
-              </Text>
-            </ImageBackground>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => setTab('skins')}
-          >
-            <ImageBackground
-              source={require('../assets/images/mainbutton.png')}
-              style={[
-                styles.tabBtn,
-                tab === 'skins' ? styles.tabActive : styles.tabInactive,
-              ]}
-              resizeMode="stretch"
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  tab === 'skins'
-                    ? styles.tabTextActive
-                    : styles.tabTextInactive,
-                ]}
-              >
-                Skins
-              </Text>
-            </ImageBackground>
-          </TouchableOpacity>
-        </View>
       </View>
     </Layout>
   );
@@ -717,7 +740,7 @@ const styles = StyleSheet.create({
     fontSize: 26 * s,
     color: '#1b0d05',
     fontFamily: 'Kanit-SemiBold',
-    marginTop: -6 * s,
+    marginTop: -11 * s,
   },
 
   stripRow: {
