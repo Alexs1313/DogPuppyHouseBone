@@ -1,3 +1,7 @@
+import LinearGradient from 'react-native-linear-gradient';
+
+import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
+
 import React, {
   useCallback,
   useEffect,
@@ -18,9 +22,8 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Layout from '../Dogpuppyhousebonecmpnts/Layout';
+
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
-import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
 
 const { width: W, height: H } = Dimensions.get('window');
 const isLandscape = W > H;
@@ -108,8 +111,8 @@ const getRandInt = (max: number) => Math.floor(Math.random() * max);
 
 const ensureOwned = (v: string | null): OwnedSkinsMap => {
   const base: OwnedSkinsMap = {
-    'dog-1': ['base'],
-    'dog-2': ['base'],
+    'dog-1': ['base', 'alt'],
+    'dog-2': ['base', 'alt'],
     'dog-3': ['base'],
     'dog-4': ['base'],
   };
@@ -121,6 +124,10 @@ const ensureOwned = (v: string | null): OwnedSkinsMap => {
         if (Array.isArray(arr) && arr.length) base[id] = arr as SkinId[];
       });
     }
+    (['dog-1', 'dog-2'] as DogId[]).forEach(id => {
+      const list = base[id];
+      if (!list.includes('alt')) base[id] = [...list, 'alt'] as SkinId[];
+    });
   } catch {}
   return base;
 };
@@ -148,8 +155,8 @@ const SkinsScreen: React.FC<{ onClose?: () => void }> = ({}) => {
   const [tab, setTab] = useState<Tab>('skins');
 
   const [owned, setOwned] = useState<OwnedSkinsMap>({
-    'dog-1': ['base'],
-    'dog-2': ['base'],
+    'dog-1': ['base', 'alt'],
+    'dog-2': ['base', 'alt'],
     'dog-3': ['base'],
     'dog-4': ['base'],
   });
@@ -304,6 +311,10 @@ const SkinsScreen: React.FC<{ onClose?: () => void }> = ({}) => {
     [owned, selectedDogId],
   );
 
+  const selectedToEquip: SkinId = hasAltForDog ? selectedSkin : 'base';
+  const isSelectedEquipped =
+    (equipped[selectedDogId] || 'base') === selectedToEquip;
+
   useEffect(() => {
     const eq = equipped[selectedDogId] || 'base';
     const altOwned = (owned[selectedDogId] || ['base']).includes('alt');
@@ -446,16 +457,16 @@ We are sure that next time you will definitely be lucky!`,
         >
           <ImageBackground
             source={imgHeader}
-            style={styles.header}
+            style={styles.puppyBoneHeader}
             resizeMode="stretch"
           >
-            <Text style={styles.headerText}>Skins</Text>
+            <Text style={styles.puppyBoneHeaderText}>Skins</Text>
           </ImageBackground>
         </View>
 
         {tab === 'skins' ? (
           <View style={{ flex: 1 }}>
-            <View style={styles.stripRow}>
+            <View style={styles.puppyBoneStripRow}>
               {DOGS.map((d, i) => {
                 const active = i === selectedDogIndex;
                 return (
@@ -476,9 +487,15 @@ We are sure that next time you will definitely be lucky!`,
                     <AnimatedPressable
                       activeOpacity={0.85}
                       onPress={() => setSelectedDogIndex(i)}
-                      style={[styles.stripItem, active && styles.stripActive]}
+                      style={[
+                        styles.puppyBoneStripItem,
+                        active && styles.puppyBoneStripActive,
+                      ]}
                     >
-                      <Image source={d.thumb} style={styles.stripImg} />
+                      <Image
+                        source={d.thumb}
+                        style={styles.puppyBoneStripImg}
+                      />
                     </AnimatedPressable>
                   </Animated.View>
                 );
@@ -498,17 +515,17 @@ We are sure that next time you will definitely be lucky!`,
                 ],
               }}
             >
-              <View style={styles.bigCardOuter}>
+              <View style={styles.puppyBoneBigCardOuter}>
                 <LinearGradient
                   colors={['#EB924D', '#963B34']}
                   style={{ borderRadius: 19 * s }}
                 >
-                  <View style={styles.bigCard}>
+                  <View style={styles.puppyBoneBigCard}>
                     <Image
                       source={
                         selectedDog.skins[hasAltForDog ? selectedSkin : 'base']
                       }
-                      style={styles.bigDog}
+                      style={styles.puppyBoneBigDog}
                       resizeMode="contain"
                     />
 
@@ -534,28 +551,36 @@ We are sure that next time you will definitely be lucky!`,
                 ],
               }}
             >
-              <View style={styles.actionRow}>
+              <View style={styles.puppyBoneActionRow}>
                 {hasAltForDog ? (
                   <AnimatedPressable activeOpacity={0.85} onPress={prevSkin}>
                     <ImageBackground
                       source={imgSmallBtn}
-                      style={styles.arrowBtn}
+                      style={styles.puppyBoneArrowBtn}
                       resizeMode="stretch"
                     >
-                      <Text style={styles.arrowText}>←</Text>
+                      <Image
+                        source={require('../assets/images/dghouslrigarr.png')}
+                      />
                     </ImageBackground>
                   </AnimatedPressable>
                 ) : (
                   <View style={{ width: 70 * s, height: 70 * s }} />
                 )}
 
-                <AnimatedPressable activeOpacity={0.85} onPress={dressSelected}>
+                <AnimatedPressable
+                  activeOpacity={0.85}
+                  onPress={dressSelected}
+                  disabled={isSelectedEquipped}
+                >
                   <ImageBackground
                     source={imgMainBtn}
-                    style={styles.actionBtn}
+                    style={styles.puppyBoneActionBtn}
                     resizeMode="stretch"
                   >
-                    <Text style={styles.actionText}>Dressed</Text>
+                    <Text style={styles.puppyBoneActionText}>
+                      {isSelectedEquipped ? 'Dressed' : 'To dress'}
+                    </Text>
                   </ImageBackground>
                 </AnimatedPressable>
 
@@ -563,10 +588,12 @@ We are sure that next time you will definitely be lucky!`,
                   <AnimatedPressable activeOpacity={0.85} onPress={nextSkin}>
                     <ImageBackground
                       source={imgSmallBtn}
-                      style={styles.arrowBtn}
+                      style={styles.puppyBoneArrowBtn}
                       resizeMode="stretch"
                     >
-                      <Text style={styles.arrowText}>→</Text>
+                      <Image
+                        source={require('../assets/images/dghousleftarr.png')}
+                      />
                     </ImageBackground>
                   </AnimatedPressable>
                 ) : (
@@ -665,38 +692,40 @@ We are sure that next time you will definitely be lucky!`,
                 {canPlay ? (
                   <ImageBackground
                     source={require('../assets/images/scoreboard.png')}
-                    style={styles.attemptsBoard}
+                    style={styles.puppyBoneAttemptsBoard}
                     resizeMode="stretch"
                   >
-                    <Text style={styles.attemptsText}>
+                    <Text style={styles.puppyBoneAttemptsText}>
                       You have {attemptsLeft}/2 attempts.
                     </Text>
                   </ImageBackground>
                 ) : (
                   <ImageBackground
                     source={require('../assets/images/scoreboard.png')}
-                    style={styles.timeBoard}
+                    style={styles.puppyBoneTimeBoard}
                     resizeMode="stretch"
                   >
-                    <Text style={[styles.attemptsText, { fontSize: 24 }]}>
+                    <Text
+                      style={[styles.puppyBoneAttemptsText, { fontSize: 24 }]}
+                    >
                       {formatLeft(timeLeft)}
                     </Text>
                   </ImageBackground>
                 )}
 
                 {canPlay && (
-                  <View style={styles.grid}>
+                  <View style={styles.puppyBoneGrid}>
                     {Array.from({ length: GRID }).map((_, idx) => (
                       <AnimatedPressable
                         key={idx}
                         activeOpacity={0.9}
                         onPress={() => onPickCell(idx)}
                         disabled={!canPlay || attemptsLeft <= 0}
-                        style={styles.cell}
+                        style={styles.puppyBoneCell}
                       >
                         <ImageBackground
                           source={require('../assets/images/unlockedBg.png')}
-                          style={styles.cellBg}
+                          style={styles.puppyBoneCellBg}
                           resizeMode="stretch"
                         />
                       </AnimatedPressable>
@@ -715,13 +744,13 @@ We are sure that next time you will definitely be lucky!`,
 export default SkinsScreen;
 
 const styles = StyleSheet.create({
-  closeBtnBg: {
+  puppyBoneCloseBtnBg: {
     width: 71 * s,
     height: 71 * s,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  timeBoard: {
+  puppyBoneTimeBoard: {
     width: 237 * s,
     height: 86 * s,
     justifyContent: 'center',
@@ -729,41 +758,41 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 130 * s,
   },
-  header: {
+  puppyBoneHeader: {
     alignSelf: 'center',
     width: 284 * s,
     height: 102 * s,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerText: {
+  puppyBoneHeaderText: {
     fontSize: 26 * s,
     color: '#1b0d05',
     fontFamily: 'Kanit-SemiBold',
     marginTop: -11 * s,
   },
 
-  stripRow: {
+  puppyBoneStripRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 10 * s,
     marginTop: 18 * s,
     paddingHorizontal: 12 * s,
   },
-  stripItem: {
+  puppyBoneStripItem: {
     width: 72 * s,
     height: 72 * s,
     borderRadius: 5 * s,
   },
-  stripActive: {
+  puppyBoneStripActive: {
     borderWidth: 2,
     borderColor: '#fff',
   },
-  stripImg: {
+  puppyBoneStripImg: {
     width: '100%',
     height: '100%',
   },
-  bigCardOuter: {
+  puppyBoneBigCardOuter: {
     width: 290 * s,
     height: 290 * s,
     borderRadius: 20 * s,
@@ -773,51 +802,50 @@ const styles = StyleSheet.create({
     marginTop: 18 * s,
     overflow: 'hidden',
   },
-  bigCard: {
+  puppyBoneBigCard: {
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  bigDog: {
+  puppyBoneBigDog: {
     width: 136,
     height: 170,
     zIndex: 2,
     right: -50,
   },
 
-  actionRow: {
+  puppyBoneActionRow: {
     marginTop: 18 * s,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 18 * s,
   },
-  arrowBtn: {
+  puppyBoneArrowBtn: {
     width: 70 * s,
     height: 70 * s,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  arrowText: {
+  puppyBoneArrowText: {
     color: '#fff',
     fontSize: 24 * s,
     fontFamily: 'Kanit-SemiBold',
   },
-  actionBtn: {
+  puppyBoneActionBtn: {
     width: 200 * s,
     height: 70 * s,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  actionText: {
+  puppyBoneActionText: {
     fontSize: 22 * s,
     color: '#fff',
     fontFamily: 'Kanit-SemiBold',
     marginTop: -2 * s,
   },
 
-  attemptsBoard: {
+  puppyBoneAttemptsBoard: {
     alignSelf: 'center',
     marginTop: 16 * s,
     width: 300 * s,
@@ -825,12 +853,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  attemptsText: {
+  puppyBoneAttemptsText: {
     color: '#fff',
     fontFamily: 'Kanit-SemiBold',
     fontSize: 16 * s,
   },
-  grid: {
+  puppyBoneGrid: {
     alignSelf: 'center',
     marginTop: 35 * s,
     width: 340 * s,
@@ -840,15 +868,15 @@ const styles = StyleSheet.create({
     gap: 8 * s,
     marginBottom: 30 * s,
   },
-  cell: {
+  puppyBoneCell: {
     width: 100 * s,
     height: 100 * s,
   },
-  cellBg: {
+  puppyBoneCellBg: {
     width: '100%',
     height: '100%',
   },
-  tabsRow: {
+  puppyBoneTabsRow: {
     flexDirection: 'row',
     paddingHorizontal: 18 * s,
     marginBottom: 24 * s,
@@ -857,19 +885,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 20,
   },
-  tabBtn: {
+  puppyBoneTabBtn: {
     height: 64 * s,
     justifyContent: 'center',
     alignItems: 'center',
     width: 160,
   },
-  tabActive: { opacity: 1 },
-  tabInactive: { opacity: 0.9 },
-  tabText: {
+  puppyBoneTabActive: { opacity: 1 },
+  puppyBoneTabInactive: { opacity: 0.9 },
+  puppyBoneTabText: {
     fontSize: 20 * s,
     fontFamily: 'Kanit-SemiBold',
     marginTop: -2 * s,
   },
-  tabTextActive: { color: '#fff' },
-  tabTextInactive: { color: '#59173E' },
+  puppyBoneTabTextActive: { color: '#fff' },
+  puppyBoneTabTextInactive: { color: '#59173E' },
 });

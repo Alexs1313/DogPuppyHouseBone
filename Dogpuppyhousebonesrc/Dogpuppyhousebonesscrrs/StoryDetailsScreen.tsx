@@ -1,3 +1,8 @@
+import { useFocusEffect } from '@react-navigation/native';
+
+import LinearGradient from 'react-native-linear-gradient';
+
+import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -13,9 +18,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../Dogpuppyhousebonecmpnts/Layout';
 import { STORIES, StoryId } from '../Dogpuppyhouseboncnsts/stories';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
-import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
 
 const { width: W, height: H } = Dimensions.get('window');
 const isLandscape = W > H;
@@ -161,60 +163,60 @@ const StoryDetailsScreen: React.FC = () => {
             }}
           >
             <View style={styles.bodyCard}>
-            <Text style={styles.title}>{story.title}</Text>
-            <Text style={styles.body}>{story.text}</Text>
+              <Text style={styles.title}>{story.title}</Text>
+              <Text style={styles.body}>{story.text}</Text>
 
-            <View style={styles.actions}>
-              <AnimatedPressable
-                activeOpacity={0.85}
-                onPress={() => navigation.goBack()}
-              >
-                <ImageBackground
-                  source={require('../assets/images/smallButton.png')}
-                  style={styles.sideBtn}
-                  resizeMode="stretch"
+              <View style={styles.actions}>
+                <AnimatedPressable
+                  activeOpacity={0.85}
+                  onPress={() => navigation.goBack()}
                 >
-                  <Image source={require('../assets/images/back.png')} />
-                </ImageBackground>
-              </AnimatedPressable>
+                  <ImageBackground
+                    source={require('../assets/images/smallButton.png')}
+                    style={styles.sideBtn}
+                    resizeMode="stretch"
+                  >
+                    <Image source={require('../assets/images/back.png')} />
+                  </ImageBackground>
+                </AnimatedPressable>
 
-              <AnimatedPressable
-                activeOpacity={0.85}
-                onPress={onShare}
-                style={{ alignSelf: 'center' }}
-              >
-                <ImageBackground
-                  source={require('../assets/images/mainbutton.png')}
-                  style={styles.shareBtn}
-                  resizeMode="stretch"
+                <AnimatedPressable
+                  activeOpacity={0.85}
+                  onPress={onShare}
+                  style={{ alignSelf: 'center' }}
                 >
-                  <Text style={styles.shareText}>Share</Text>
-                </ImageBackground>
-              </AnimatedPressable>
+                  <ImageBackground
+                    source={require('../assets/images/mainbutton.png')}
+                    style={styles.shareBtn}
+                    resizeMode="stretch"
+                  >
+                    <Text style={styles.shareText}>Share</Text>
+                  </ImageBackground>
+                </AnimatedPressable>
 
-              <AnimatedPressable
-                activeOpacity={0.85}
-                onPress={onToggleFavorite}
-              >
-                <ImageBackground
-                  source={require('../assets/images/smallButton.png')}
-                  style={styles.sideBtn}
-                  resizeMode="stretch"
+                <AnimatedPressable
+                  activeOpacity={0.85}
+                  onPress={onToggleFavorite}
                 >
-                  {isFavorite ? (
-                    <Image
-                      source={require('../assets/images/favsfi.png')}
-                      style={{ bottom: 2 }}
-                    />
-                  ) : (
-                    <Image
-                      source={require('../assets/images/favs.png')}
-                      style={{ bottom: 2 }}
-                    />
-                  )}
-                </ImageBackground>
-              </AnimatedPressable>
-            </View>
+                  <ImageBackground
+                    source={require('../assets/images/smallButton.png')}
+                    style={styles.sideBtn}
+                    resizeMode="stretch"
+                  >
+                    {isFavorite ? (
+                      <Image
+                        source={require('../assets/images/favsfi.png')}
+                        style={{ bottom: 2 }}
+                      />
+                    ) : (
+                      <Image
+                        source={require('../assets/images/favs.png')}
+                        style={{ bottom: 2 }}
+                      />
+                    )}
+                  </ImageBackground>
+                </AnimatedPressable>
+              </View>
             </View>
           </LinearGradient>
         </Animated.View>

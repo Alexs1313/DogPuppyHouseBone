@@ -1,3 +1,9 @@
+// ga,e
+
+import Layout from '../Dogpuppyhousebonecmpnts/Layout';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+
+import Orientation from 'react-native-orientation-locker';
 import React, {
   useCallback,
   useEffect,
@@ -5,6 +11,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+
 import {
   Alert,
   Dimensions,
@@ -16,9 +23,6 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Layout from '../Dogpuppyhousebonecmpnts/Layout';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import Orientation from 'react-native-orientation-locker';
 
 type FallingType = 'bone' | 'trash' | 'nodogs';
 
@@ -40,6 +44,7 @@ const isLandscape = W0 > H;
 const s = isLandscape ? W0 / 844 : Math.min(W0 / 390, H / 844);
 
 const STORAGE_TOTAL_BONES = 'TOTAL_BONES';
+const DEFAULT_BONES = 50;
 
 const STORAGE_UNLOCKED_DOGS = 'UNLOCKED_DOGS';
 const STORAGE_SKIN_EQUIPPED = 'SKIN_EQUIPPED';
@@ -105,7 +110,7 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
   const [sessionBones, setSessionBones] = useState(0);
   const [strikes, setStrikes] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [totalBones, setTotalBones] = useState<number>(0);
+  const [totalBones, setTotalBones] = useState<number>(DEFAULT_BONES);
 
   const navigation = useNavigation();
   const [fieldW, setFieldW] = useState(W0);
@@ -143,7 +148,14 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
           AsyncStorage.getItem(STORAGE_SKIN_EQUIPPED),
         ]);
 
-        setTotalBones(bonesRaw ? Number(bonesRaw) || 0 : 0);
+        const bonesValue = bonesRaw ? Number(bonesRaw) : null;
+        const nextBones =
+          bonesValue != null && Number.isFinite(bonesValue)
+            ? bonesValue
+            : DEFAULT_BONES;
+        setTotalBones(nextBones);
+        if (bonesRaw == null)
+          await AsyncStorage.setItem(STORAGE_TOTAL_BONES, String(nextBones));
 
         const unlocked = parseDogList(unlockedRaw);
 
@@ -155,7 +167,7 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
         const skin: SkinId = equipped[dogId] || 'base';
         setDogImgSource(DOG_ASSETS[dogId][skin] ?? DOG_ASSETS['dog-1'].base);
       } catch {
-        setTotalBones(0);
+        setTotalBones(DEFAULT_BONES);
         chosenDogIdRef.current = 'dog-1';
         setDogImgSource(DOG_ASSETS['dog-1'].base);
       }
@@ -196,6 +208,17 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
     useCallback(() => {
       Orientation.lockToPortrait();
       resetGame();
+      (async () => {
+        try {
+          const equippedRaw = await AsyncStorage.getItem(STORAGE_SKIN_EQUIPPED);
+          const equipped = parseEquipped(equippedRaw);
+          const dogId = chosenDogIdRef.current;
+          const skin: SkinId = equipped[dogId] || 'base';
+          setDogImgSource(
+            DOG_ASSETS[dogId]?.[skin] ?? DOG_ASSETS['dog-1'].base,
+          );
+        } catch {}
+      })();
       return () => {
         stopGameSession();
         Orientation.unlockAllOrientations();
@@ -207,14 +230,11 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
     async (session: number) => {
       try {
         const raw = await AsyncStorage.getItem(STORAGE_TOTAL_BONES);
-        const prev = raw ? Number(raw) || 0 : 0;
-        const next = prev + session;
-        await AsyncStorage.setItem(STORAGE_TOTAL_BONES, String(next));
-        setTotalBones(next);
+        const total = raw ? Number(raw) || 0 : 0;
 
         Alert.alert(
           'Game over',
-          `You collected ${session} bones.\nTotal bones: ${next}`,
+          `You collected ${session} bones.\nTotal bones: ${total}`,
           [
             { text: 'Restart', onPress: resetGame },
             {
@@ -318,7 +338,14 @@ const DogGameScreen: React.FC<{ onClose?: () => void }> = () => {
       nextItems.push(moved);
     }
 
-    if (gotBone) setSessionBones(v => v + gotBone);
+    if (gotBone) {
+      setSessionBones(v => v + gotBone);
+      setTotalBones(prev => {
+        const next = prev + gotBone;
+        AsyncStorage.setItem(STORAGE_TOTAL_BONES, String(next));
+        return next;
+      });
+    }
 
     if (gotBad) {
       setStrikes(prev => {

@@ -1,3 +1,10 @@
+// stories
+
+import { STORIES, StoryId } from '../Dogpuppyhouseboncnsts/stories';
+
+import LinearGradient from 'react-native-linear-gradient';
+
+import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -11,9 +18,6 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Layout from '../Dogpuppyhousebonecmpnts/Layout';
-import { STORIES, StoryId } from '../Dogpuppyhouseboncnsts/stories';
-import LinearGradient from 'react-native-linear-gradient';
-import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
 
 const { width: W, height: H } = Dimensions.get('window');
 const puppyBoneIsLandscape = W > H;

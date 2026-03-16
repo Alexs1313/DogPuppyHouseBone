@@ -1,6 +1,21 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+// guess where  screen
+
+import Layout from '../Dogpuppyhousebonecmpnts/Layout';
+import { useNavigation } from '@react-navigation/native';
+
+import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
+
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
 import {
   Alert,
+  Animated,
   Dimensions,
   Image,
   ImageBackground,
@@ -10,9 +25,6 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Layout from '../Dogpuppyhousebonecmpnts/Layout';
-import { useNavigation } from '@react-navigation/native';
-import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
 
 const { width: W, height: H } = Dimensions.get('window');
 const isLandscape = W > H;
@@ -83,6 +95,43 @@ const GuessWhereScreen: React.FC = () => {
   const [activeGuessDog, setActiveGuessDog] = useState<DogId>('dog-1');
   const [guessResult, setGuessResult] = useState<GuessResult>('playing');
   const [tick, setTick] = useState(0);
+  const [shakeCellIndex, setShakeCellIndex] = useState<number | null>(null);
+  const shakeX = useRef(new Animated.Value(0)).current;
+
+  const runCellShake = useCallback(
+    (idx: number) => {
+      setShakeCellIndex(idx);
+      shakeX.setValue(0);
+      Animated.sequence([
+        Animated.timing(shakeX, {
+          toValue: -10 * s,
+          duration: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeX, {
+          toValue: 10 * s,
+          duration: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeX, {
+          toValue: -6 * s,
+          duration: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeX, {
+          toValue: 6 * s,
+          duration: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeX, {
+          toValue: 0,
+          duration: 30,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setShakeCellIndex(null));
+    },
+    [shakeX],
+  );
 
   const canPlay = useMemo(() => now() >= nextAt, [nextAt]);
   const timeLeft = useMemo(() => Math.max(0, nextAt - now()), [nextAt, tick]);
@@ -207,6 +256,8 @@ We are sure that next time you will definitely be lucky!`,
         return;
       }
 
+      runCellShake(idx);
+
       const nextAtt = Math.max(0, attemptsLeft - 1);
       setAttemptsLeft(nextAtt);
       await AsyncStorage.setItem(STORAGE_GUESS_ATTEMPTS_LEFT, String(nextAtt));
@@ -225,6 +276,7 @@ We are sure that next time you will definitely be lucky!`,
       lockFor24h,
       navigation,
       owned,
+      runCellShake,
       startNewRoundIfNeeded,
     ],
   );
@@ -296,19 +348,28 @@ We are sure that next time you will definitely be lucky!`,
             {canPlay && (
               <View style={styles.grid}>
                 {Array.from({ length: GRID }).map((_, idx) => (
-                  <AnimatedPressable
+                  <Animated.View
                     key={idx}
-                    activeOpacity={0.9}
-                    onPress={() => onPickCell(idx)}
-                    disabled={!canPlay || attemptsLeft <= 0}
-                    style={styles.cell}
+                    style={[
+                      styles.cell,
+                      shakeCellIndex === idx && {
+                        transform: [{ translateX: shakeX }],
+                      },
+                    ]}
                   >
-                    <ImageBackground
-                      source={require('../assets/images/unlockedBg.png')}
-                      style={styles.cellBg}
-                      resizeMode="stretch"
-                    />
-                  </AnimatedPressable>
+                    <AnimatedPressable
+                      activeOpacity={0.9}
+                      onPress={() => onPickCell(idx)}
+                      disabled={!canPlay || attemptsLeft <= 0}
+                      style={StyleSheet.absoluteFill}
+                    >
+                      <ImageBackground
+                        source={require('../assets/images/unlockedBg.png')}
+                        style={styles.cellBg}
+                        resizeMode="stretch"
+                      />
+                    </AnimatedPressable>
+                  </Animated.View>
                 ))}
               </View>
             )}

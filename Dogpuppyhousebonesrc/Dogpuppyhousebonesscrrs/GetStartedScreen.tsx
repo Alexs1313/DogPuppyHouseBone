@@ -1,4 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+//    onboard
+
+import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
+
+import { SLIDES } from '../Dogpuppyhouseboncnsts/slides';
+
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Animated,
   Image,
@@ -8,9 +20,8 @@ import {
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+
 import Layout from '../Dogpuppyhousebonecmpnts/Layout';
-import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
-import { SLIDES } from '../Dogpuppyhouseboncnsts/slides';
 
 const GetStartedScreen: React.FC = () => {
   const [slideNumber, setSlideNumber] = useState(0);
