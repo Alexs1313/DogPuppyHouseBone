@@ -2,19 +2,19 @@ export const SLIDES = [
   {
     title: 'Welcome to Dog World',
     image: require('../assets/images/startedfr.png'),
-    text: 'Take care of your first dog in its cozy house. Feed it, give water, and keep your puppy happy every day.',
+    text: 'Take care of your dogs in cozy homes. Feed them, give them water, and keep your puppies happy every day.',
     button: 'Next',
   },
   {
-    title: 'Collect Bones & Play',
+    title: 'Collect Bones',
     image: require('../assets/images/startedsc.png'),
-    text: 'Play the mini-game to collect bones. Bones are the currency to buy food, water, and new dogs.',
+    text: 'Complete the activity to collect bones. Bones are the currency to buy food, water, and new dogs.',
     button: 'Okay',
   },
   {
     title: 'Unlock Dogs & Skins',
     image: require('../assets/images/startedth.png'),
-    text: 'Unlock new dogs and houses. Once a day, guess the house and win a special skin.',
+    text: 'Unlock new companions and houses. Once a day, guess the house and get a special skin.',
     button: 'Continue',
   },
   {
