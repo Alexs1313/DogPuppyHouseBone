@@ -1,13 +1,13 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import IntroLoader from '../Dogpuppyhousebonecmpnts/IntroLoader';
-import GetStartedScreen from '../Dogpuppyhousebonesscrrs/GetStartedScreen';
-import DogGameScreen from '../Dogpuppyhousebonesscrrs/DogGameScreen';
-import MarketScreen from '../Dogpuppyhousebonesscrrs/MarketScreen';
-import SkinsScreen from '../Dogpuppyhousebonesscrrs/SkinsScreen';
-import StoryDetailsScreen from '../Dogpuppyhousebonesscrrs/StoryDetailsScreen';
+import IntroLoader from '../Dgppyhuseboncmpnts/IntroLoader';
+import GetStartedScreen from '../[Dgppyhsebnesscrrs]/GetStartedScreen';
+import DogGameScreen from '../[Dgppyhsebnesscrrs]/DogGameScreen';
+import MarketScreen from '../[Dgppyhsebnesscrrs]/MarketScreen';
+import SkinsScreen from '../[Dgppyhsebnesscrrs]/SkinsScreen';
+import StoryDetailsScreen from '../[Dgppyhsebnesscrrs]/StoryDetailsScreen';
 import Tabroutes from '../../Tabroutes';
-import { StoryId } from '../Dogpuppyhouseboncnsts/stories';
+import { StoryId } from '../Dgpyhseboncnsts/stories';
 
 export type RootStackParamList = {
   IntroLoader: undefined;

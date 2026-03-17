@@ -1,8 +1,8 @@
-import StackNavigation from './Dogpuppyhousebonesrc/Dogpuppyhousebonerts/StackNavigation';
+import StackNavigation from './[Dgppyhsebnesrc]/Dgppyhoebonerts/StackNavigation';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 
-const PuppybneApp: React.FC = () => {
+const DgCore: React.FC = () => {
   return (
     <NavigationContainer>
       <StackNavigation />
@@ -10,4 +10,4 @@ const PuppybneApp: React.FC = () => {
   );
 };
 
-export default PuppybneApp;
+export default DgCore;

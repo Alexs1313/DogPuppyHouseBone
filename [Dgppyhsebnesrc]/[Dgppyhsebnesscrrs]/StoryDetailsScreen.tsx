@@ -2,7 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import LinearGradient from 'react-native-linear-gradient';
 
-import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
+import AnimatedPressable from '../Dgppyhuseboncmpnts/AnimatedPressable';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -15,8 +15,8 @@ import {
   View,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Layout from '../Dogpuppyhousebonecmpnts/Layout';
-import { STORIES, StoryId } from '../Dogpuppyhouseboncnsts/stories';
+import Layout from '../Dgppyhuseboncmpnts/Layout';
+import { STORIES, StoryId } from '../Dgpyhseboncnsts/stories';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: W, height: H } = Dimensions.get('window');

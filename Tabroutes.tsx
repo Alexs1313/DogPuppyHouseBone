@@ -1,3 +1,14 @@
+// tabbbs
+
+import DogGameScreen from './[Dgppyhsebnesrc]/[Dgppyhsebnesscrrs]/DogGameScreen';
+import GuessWhereScreen from './[Dgppyhsebnesrc]/[Dgppyhsebnesscrrs]/GuessWhereScreen';
+import HubScreen from './[Dgppyhsebnesrc]/[Dgppyhsebnesscrrs]/HubScreen';
+
+import MarketScreen from './[Dgppyhsebnesrc]/[Dgppyhsebnesscrrs]/MarketScreen';
+
+import SkinsScreen from './[Dgppyhsebnesrc]/[Dgppyhsebnesscrrs]/SkinsScreen';
+
+import StoriesScreen from './[Dgppyhsebnesrc]/[Dgppyhsebnesscrrs]/StoriesScreen';
 import React, { useCallback, useRef } from 'react';
 import {
   BottomTabBarProps,
@@ -11,12 +22,6 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import DogGameScreen from './Dogpuppyhousebonesrc/Dogpuppyhousebonesscrrs/DogGameScreen';
-import GuessWhereScreen from './Dogpuppyhousebonesrc/Dogpuppyhousebonesscrrs/GuessWhereScreen';
-import HubScreen from './Dogpuppyhousebonesrc/Dogpuppyhousebonesscrrs/HubScreen';
-import MarketScreen from './Dogpuppyhousebonesrc/Dogpuppyhousebonesscrrs/MarketScreen';
-import SkinsScreen from './Dogpuppyhousebonesrc/Dogpuppyhousebonesscrrs/SkinsScreen';
-import StoriesScreen from './Dogpuppyhousebonesrc/Dogpuppyhousebonesscrrs/StoriesScreen';
 
 type TabParamList = {
   HubScreen: undefined;
@@ -29,13 +34,13 @@ type TabParamList = {
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
-const TAB_BUTTON_BG = require('./Dogpuppyhousebonesrc/assets/images/smallButton.png');
-const TAB_ICON_HOME = require('./Dogpuppyhousebonesrc/assets/images/tbb1.png');
-const TAB_ICON_MARKET = require('./Dogpuppyhousebonesrc/assets/images/tbb2.png');
-const TAB_ICON_GAME = require('./Dogpuppyhousebonesrc/assets/images/tbb3.png');
-const TAB_ICON_GUESS = require('./Dogpuppyhousebonesrc/assets/images/tbb4.png');
-const TAB_ICON_COLLECTION = require('./Dogpuppyhousebonesrc/assets/images/tbb5.png');
-const TAB_ICON_STORIES = require('./Dogpuppyhousebonesrc/assets/images/tbb6.png');
+const TAB_BUTTON_BG = require('./[Dgppyhsebnesrc]/assets/images/smallButton.png');
+const TAB_ICON_HOME = require('./[Dgppyhsebnesrc]/assets/images/tbb1.png');
+const TAB_ICON_MARKET = require('./[Dgppyhsebnesrc]/assets/images/tbb2.png');
+const TAB_ICON_GAME = require('./[Dgppyhsebnesrc]/assets/images/tbb3.png');
+const TAB_ICON_GUESS = require('./[Dgppyhsebnesrc]/assets/images/tbb4.png');
+const TAB_ICON_COLLECTION = require('./[Dgppyhsebnesrc]/assets/images/tbb5.png');
+const TAB_ICON_STORIES = require('./[Dgppyhsebnesrc]/assets/images/tbb6.png');
 
 const TAB_ICONS: Record<keyof TabParamList, any> = {
   HubScreen: TAB_ICON_HOME,

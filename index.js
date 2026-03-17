@@ -3,7 +3,7 @@
  */
 
 import { AppRegistry } from 'react-native';
-import PuppybneApp from './PuppybneApp';
+import DgCore from './DgCore';
 import { name as appName } from './app.json';
 
-AppRegistry.registerComponent(appName, () => PuppybneApp);
+AppRegistry.registerComponent(appName, () => DgCore);
