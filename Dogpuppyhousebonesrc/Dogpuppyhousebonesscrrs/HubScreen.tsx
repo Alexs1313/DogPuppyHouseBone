@@ -1,3 +1,7 @@
+// home
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
 import React, {
   useCallback,
   useEffect,
@@ -15,9 +19,7 @@ import {
   Dimensions,
 } from 'react-native';
 import Layout from '../Dogpuppyhousebonecmpnts/Layout';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
+import { useFocusEffect } from '@react-navigation/native';
 
 type DogId = 'dog-1' | 'dog-2' | 'dog-3' | 'dog-4';
 
@@ -46,7 +48,52 @@ const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
 const STORAGE_FOOD_COUNT = 'FOOD_COUNT';
 const STORAGE_WATER_COUNT = 'WATER_COUNT';
+const DEFAULT_FOOD = 5;
+const DEFAULT_WATER = 5;
 const STORAGE_UNLOCKED_DOGS = 'UNLOCKED_DOGS';
+const STORAGE_SKIN_EQUIPPED = 'SKIN_EQUIPPED';
+
+type SkinId = 'base' | 'alt';
+
+type EquippedMap = Record<DogId, SkinId>;
+
+const HUB_DOG_SKINS: Record<DogId, Record<SkinId, any>> = {
+  'dog-1': {
+    base: require('../assets/images/dog1.png'),
+    alt: require('../assets/images/dog1_alt.png'),
+  },
+  'dog-2': {
+    base: require('../assets/images/dog2.png'),
+    alt: require('../assets/images/dog2_alt.png'),
+  },
+  'dog-3': {
+    base: require('../assets/images/dog3.png'),
+    alt: require('../assets/images/dog3_alt.png'),
+  },
+  'dog-4': {
+    base: require('../assets/images/dog4.png'),
+    alt: require('../assets/images/dog4_alt.png'),
+  },
+};
+
+const ensureEquipped = (v: string | null): EquippedMap => {
+  const base: EquippedMap = {
+    'dog-1': 'base',
+    'dog-2': 'base',
+    'dog-3': 'base',
+    'dog-4': 'base',
+  };
+  try {
+    const parsed = v ? JSON.parse(v) : null;
+    if (parsed && typeof parsed === 'object') {
+      (Object.keys(base) as DogId[]).forEach(id => {
+        const val = (parsed as any)[id];
+        if (val === 'base' || val === 'alt') base[id] = val;
+      });
+    }
+  } catch {}
+  return base;
+};
 
 const ensureNumber = (v: string | null, fallback: number) => {
   if (v == null) return fallback;
@@ -54,12 +101,19 @@ const ensureNumber = (v: string | null, fallback: number) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+const DEFAULT_UNLOCKED: DogId[] = ['dog-1', 'dog-2'];
+
 const ensureUnlocked = (v: string | null): DogId[] => {
   try {
     const parsed = v ? JSON.parse(v) : null;
-    if (Array.isArray(parsed) && parsed.length) return parsed as DogId[];
+    if (Array.isArray(parsed) && parsed.length) {
+      const rest = (parsed as DogId[]).filter(
+        id => id !== 'dog-1' && id !== 'dog-2',
+      );
+      return [...DEFAULT_UNLOCKED, ...rest];
+    }
   } catch {}
-  return ['dog-1'];
+  return [...DEFAULT_UNLOCKED];
 };
 
 const DogCard = React.memo(
@@ -110,7 +164,11 @@ const DogCard = React.memo(
       <Animated.View
         style={[styles.cardWrap, { transform: [{ translateX: cardShakeX }] }]}
       >
-        <AnimatedPressable activeOpacity={0.85} onPress={handlePress}>
+        <AnimatedPressable
+          activeOpacity={0.85}
+          onPress={handlePress}
+          disabled={unlocked}
+        >
           <ImageBackground
             style={styles.cardBg}
             source={
@@ -201,12 +259,12 @@ const DogCard = React.memo(
 );
 
 const HomeScreen: React.FC = () => {
-  const navigation = useNavigation<any>();
+  const [foodCount, setFoodCount] = useState(DEFAULT_FOOD);
+  const [waterCount, setWaterCount] = useState(DEFAULT_WATER);
 
-  const [foodCount, setFoodCount] = useState(5);
-  const [waterCount, setWaterCount] = useState(5);
-
-  const [unlockedDogs, setUnlockedDogs] = useState<DogId[]>(['dog-1']);
+  const [unlockedDogs, setUnlockedDogs] = useState<DogId[]>(() => [
+    ...DEFAULT_UNLOCKED,
+  ]);
 
   const [dogs, setDogs] = useState<DogState[]>([
     {
@@ -309,19 +367,29 @@ const HomeScreen: React.FC = () => {
 
   const loadFromStorage = useCallback(async () => {
     try {
-      const [f, w, ud] = await Promise.all([
+      const [f, w, ud, eqRaw] = await Promise.all([
         AsyncStorage.getItem(STORAGE_FOOD_COUNT),
         AsyncStorage.getItem(STORAGE_WATER_COUNT),
         AsyncStorage.getItem(STORAGE_UNLOCKED_DOGS),
+        AsyncStorage.getItem(STORAGE_SKIN_EQUIPPED),
       ]);
 
-      const nextFood = ensureNumber(f, 5);
-      const nextWater = ensureNumber(w, 5);
+      const nextFood = ensureNumber(f, DEFAULT_FOOD);
+      const nextWater = ensureNumber(w, DEFAULT_WATER);
       const nextUnlocked = ensureUnlocked(ud);
+      const equippedMap = ensureEquipped(eqRaw);
 
       setFoodCount(nextFood);
       setWaterCount(nextWater);
       setUnlockedDogs(nextUnlocked);
+      setDogs(prev =>
+        prev.map(d => {
+          const skin: SkinId = equippedMap[d.id] || 'base';
+          const imageSource =
+            HUB_DOG_SKINS[d.id]?.[skin] ?? HUB_DOG_SKINS[d.id]?.base ?? d.image;
+          return { ...d, image: imageSource };
+        }),
+      );
 
       if (f == null)
         await AsyncStorage.setItem(STORAGE_FOOD_COUNT, String(nextFood));
@@ -335,9 +403,9 @@ const HomeScreen: React.FC = () => {
 
       if (!nextUnlocked.includes(selectedDogId)) setSelectedDogId('dog-1');
     } catch {
-      setFoodCount(5);
-      setWaterCount(5);
-      setUnlockedDogs(['dog-1']);
+      setFoodCount(DEFAULT_FOOD);
+      setWaterCount(DEFAULT_WATER);
+      setUnlockedDogs([...DEFAULT_UNLOCKED]);
     }
   }, [selectedDogId]);
 
@@ -363,7 +431,8 @@ const HomeScreen: React.FC = () => {
   }, []);
 
   const isUnlocked = useCallback(
-    (id: DogId) => unlockedDogs.includes(id) || id === 'dog-1',
+    (id: DogId) =>
+      unlockedDogs.includes(id) || id === 'dog-1' || id === 'dog-2',
     [unlockedDogs],
   );
 
@@ -493,7 +562,9 @@ const HomeScreen: React.FC = () => {
                 index={i}
                 isSelected={dog.id === selectedDogId}
                 flashKind={
-                  cardFlash && cardFlash.dogId === dog.id ? cardFlash.kind : null
+                  cardFlash && cardFlash.dogId === dog.id
+                    ? cardFlash.kind
+                    : null
                 }
                 onPress={selectDog}
               />

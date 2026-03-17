@@ -1,3 +1,9 @@
+// market screen
+
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+
+import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
+
 import React, {
   useCallback,
   useEffect,
@@ -5,6 +11,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+
 import {
   Animated,
   Image,
@@ -14,11 +21,10 @@ import {
   View,
   Dimensions,
 } from 'react-native';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Layout from '../Dogpuppyhousebonecmpnts/Layout';
 import LinearGradient from 'react-native-linear-gradient';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import AnimatedPressable from '../Dogpuppyhousebonecmpnts/AnimatedPressable';
 
 const { width: W, height: H } = Dimensions.get('window');
 const isLandscape = W > H;
@@ -26,6 +32,7 @@ const isLandscape = W > H;
 const s = isLandscape ? W / 844 : Math.min(W / 390, H / 844);
 
 const STORAGE_TOTAL_BONES = 'TOTAL_BONES';
+const DEFAULT_BONES = 50;
 const STORAGE_FOOD_COUNT = 'FOOD_COUNT';
 const STORAGE_WATER_COUNT = 'WATER_COUNT';
 const STORAGE_UNLOCKED_DOGS = 'UNLOCKED_DOGS';
@@ -74,7 +81,7 @@ const pad3 = (n: number) => String(n).padStart(3, '0');
 const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
   const [tab, setTab] = useState<Tab>('products');
 
-  const [bones, setBones] = useState<number>(0);
+  const [bones, setBones] = useState<number>(DEFAULT_BONES);
   const [foodCount, setFoodCount] = useState<number>(0);
   const [waterCount, setWaterCount] = useState<number>(0);
 
@@ -84,9 +91,14 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
   const foodShakeX = useRef(new Animated.Value(0)).current;
   const waterShakeX = useRef(new Animated.Value(0)).current;
   const dogShakeX = useRef(new Animated.Value(0)).current;
-  const productsEntrance = useRef([new Animated.Value(0), new Animated.Value(0)])
-    .current;
-  const dogsEntrance = useRef([new Animated.Value(0), new Animated.Value(0)]).current;
+  const productsEntrance = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
+  const dogsEntrance = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
 
   const activeDog = useMemo(() => DOGS[dogIndex], [dogIndex]);
   const isUnlocked = useMemo(
@@ -94,31 +106,46 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
     [activeDog.id, activeDog.price, unlockedDogs],
   );
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [b, f, w, ud] = await Promise.all([
-          AsyncStorage.getItem(STORAGE_TOTAL_BONES),
-          AsyncStorage.getItem(STORAGE_FOOD_COUNT),
-          AsyncStorage.getItem(STORAGE_WATER_COUNT),
-          AsyncStorage.getItem(STORAGE_UNLOCKED_DOGS),
-        ]);
+  const loadFromStorage = useCallback(async () => {
+    try {
+      const [b, f, w, ud] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_TOTAL_BONES),
+        AsyncStorage.getItem(STORAGE_FOOD_COUNT),
+        AsyncStorage.getItem(STORAGE_WATER_COUNT),
+        AsyncStorage.getItem(STORAGE_UNLOCKED_DOGS),
+      ]);
 
-        setBones(b ? Number(b) || 0 : 0);
-        setFoodCount(f ? Number(f) || 0 : 0);
-        setWaterCount(w ? Number(w) || 0 : 0);
+      const bonesVal = b ? Number(b) : null;
+      const nextBones =
+        bonesVal != null && Number.isFinite(bonesVal)
+          ? bonesVal
+          : DEFAULT_BONES;
+      setBones(nextBones);
+      if (b == null)
+        await AsyncStorage.setItem(STORAGE_TOTAL_BONES, String(nextBones));
+      setFoodCount(f ? Number(f) || 0 : 0);
+      setWaterCount(w ? Number(w) || 0 : 0);
 
-        const parsed = ud ? (JSON.parse(ud) as string[]) : ['dog-1'];
-        if (Array.isArray(parsed) && parsed.length) setUnlockedDogs(parsed);
-        else setUnlockedDogs(['dog-1']);
-      } catch {
-        setBones(0);
-        setFoodCount(0);
-        setWaterCount(0);
-        setUnlockedDogs(['dog-1']);
-      }
-    })();
+      const parsed = ud ? (JSON.parse(ud) as string[]) : ['dog-1'];
+      if (Array.isArray(parsed) && parsed.length) setUnlockedDogs(parsed);
+      else setUnlockedDogs(['dog-1']);
+    } catch {
+      setBones(DEFAULT_BONES);
+      setFoodCount(0);
+      setWaterCount(0);
+      setUnlockedDogs(['dog-1']);
+    }
   }, []);
+
+  useEffect(() => {
+    loadFromStorage();
+  }, [loadFromStorage]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadFromStorage();
+    }, [loadFromStorage]),
+  );
 
   const saveBones = useCallback(async (next: number) => {
     setBones(next);
@@ -406,60 +433,62 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
               }}
             >
               <View style={styles.priceRow}>
-              <AnimatedPressable activeOpacity={0.85} onPress={prevDog}>
-                <ImageBackground
-                  source={imgSmallBtn}
-                  style={styles.arrowBtn}
-                  resizeMode="stretch"
-                >
-                  {imgArrowLeft ? (
-                    <Image source={imgArrowRight} resizeMode="contain" />
-                  ) : (
-                    <Text style={styles.arrowText}>←</Text>
-                  )}
-                </ImageBackground>
-              </AnimatedPressable>
-
-              <Animated.View style={{ transform: [{ translateX: dogShakeX }] }}>
-                <AnimatedPressable
-                  activeOpacity={0.85}
-                  onPress={buyDog}
-                  disabled={isUnlocked || activeDog.price === 0}
-                >
+                <AnimatedPressable activeOpacity={0.85} onPress={prevDog}>
                   <ImageBackground
-                    source={require('../assets/images/mainbutton.png')}
-                    style={styles.buyBoard}
+                    source={imgSmallBtn}
+                    style={styles.arrowBtn}
                     resizeMode="stretch"
                   >
-                    {isUnlocked ? (
-                      <Text style={styles.buyText}>Received</Text>
+                    {imgArrowLeft ? (
+                      <Image source={imgArrowRight} resizeMode="contain" />
                     ) : (
-                      <View style={styles.priceInline}>
-                        <Image
-                          source={imgBone}
-                          style={styles.priceBone}
-                          resizeMode="contain"
-                        />
-                        <Text style={styles.buyText}>{activeDog.price}</Text>
-                      </View>
+                      <Text style={styles.arrowText}>←</Text>
                     )}
                   </ImageBackground>
                 </AnimatedPressable>
-              </Animated.View>
 
-              <AnimatedPressable activeOpacity={0.85} onPress={nextDog}>
-                <ImageBackground
-                  source={imgSmallBtn}
-                  style={styles.arrowBtn}
-                  resizeMode="stretch"
+                <Animated.View
+                  style={{ transform: [{ translateX: dogShakeX }] }}
                 >
-                  {imgArrowRight ? (
-                    <Image source={imgArrowLeft} resizeMode="contain" />
-                  ) : (
-                    <Text style={styles.arrowText}>→</Text>
-                  )}
-                </ImageBackground>
-              </AnimatedPressable>
+                  <AnimatedPressable
+                    activeOpacity={0.85}
+                    onPress={buyDog}
+                    disabled={isUnlocked || activeDog.price === 0}
+                  >
+                    <ImageBackground
+                      source={require('../assets/images/mainbutton.png')}
+                      style={styles.buyBoard}
+                      resizeMode="stretch"
+                    >
+                      {isUnlocked ? (
+                        <Text style={styles.buyText}>Received</Text>
+                      ) : (
+                        <View style={styles.priceInline}>
+                          <Image
+                            source={imgBone}
+                            style={styles.priceBone}
+                            resizeMode="contain"
+                          />
+                          <Text style={styles.buyText}>{activeDog.price}</Text>
+                        </View>
+                      )}
+                    </ImageBackground>
+                  </AnimatedPressable>
+                </Animated.View>
+
+                <AnimatedPressable activeOpacity={0.85} onPress={nextDog}>
+                  <ImageBackground
+                    source={imgSmallBtn}
+                    style={styles.arrowBtn}
+                    resizeMode="stretch"
+                  >
+                    {imgArrowRight ? (
+                      <Image source={imgArrowLeft} resizeMode="contain" />
+                    ) : (
+                      <Text style={styles.arrowText}>→</Text>
+                    )}
+                  </ImageBackground>
+                </AnimatedPressable>
               </View>
             </Animated.View>
           </View>
@@ -501,7 +530,9 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
 
                   <Text style={styles.productTitle}>Feed</Text>
 
-                  <Animated.View style={{ transform: [{ translateX: foodShakeX }] }}>
+                  <Animated.View
+                    style={{ transform: [{ translateX: foodShakeX }] }}
+                  >
                     <AnimatedPressable activeOpacity={0.85} onPress={buyFood}>
                       <ImageBackground
                         source={require('../assets/images/scoreboard.png')}
@@ -559,7 +590,9 @@ const MarketScreen: React.FC<{ onClose?: () => void }> = () => {
 
                   <Text style={styles.productTitle}>Water</Text>
 
-                  <Animated.View style={{ transform: [{ translateX: waterShakeX }] }}>
+                  <Animated.View
+                    style={{ transform: [{ translateX: waterShakeX }] }}
+                  >
                     <AnimatedPressable activeOpacity={0.85} onPress={buyWater}>
                       <ImageBackground
                         source={require('../assets/images/scoreboard.png')}
