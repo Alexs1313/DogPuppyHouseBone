@@ -1,6 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+// IntroLoader
+
 import { View, Animated, ScrollView, ImageBackground } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
+
+import React, { useEffect, useRef } from 'react';
 
 type RootStackParamList = {
   GetStartedScreen: undefined;
