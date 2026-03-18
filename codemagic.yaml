@@ -4,16 +4,16 @@ workflows:
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
-      app_store_connect: PuppyBonAPIKey
+      app_store_connect: BonPuppyAPIKey
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.skfjskpuppsnm.bonkgkd
+        bundle_identifier: com.skfjskppsnm.bonkgkdsada
       vars:
-        BUNDLE_ID: com.skfjskpuppsnm.bonkgkd
+        BUNDLE_ID: com.skfjskppsnm.bonkgkdsada
         XCODE_WORKSPACE: DogPuppyHouseBone.xcworkspace
         XCODE_SCHEME: DogPuppyHouseBone
-        APP_STORE_APPLE_ID: 6760693211
+        APP_STORE_APPLE_ID: 6760764912
     scripts:
       - name: Install npm dependencies
         script: |

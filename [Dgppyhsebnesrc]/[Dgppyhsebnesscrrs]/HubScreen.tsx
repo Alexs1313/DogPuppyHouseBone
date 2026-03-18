@@ -754,13 +754,13 @@ const puppBonStyles = StyleSheet.create({
     flex: 1,
     height: 10 * puppBonS,
     borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: 'rgb(253, 253, 253)',
     overflow: 'hidden',
   },
   puppBonBarFill: {
     height: '100%',
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#59173E',
   },
   puppBonLockBtn: {
     width: 71,
