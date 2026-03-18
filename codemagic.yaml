@@ -1,19 +1,19 @@
 workflows:
   ios-workflow:
-    name: 'DogH0usa: The puppy bon'
+    name: 'Dog: Home puppy bon'
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
-      app_store_connect: BonPuppyAPIKey
+      app_store_connect: HomePuppyAPIKey
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.skfjskppsnm.bonkgkdsada
+        bundle_identifier: com.asdfadqw.ptort.piowr
       vars:
-        BUNDLE_ID: com.skfjskppsnm.bonkgkdsada
+        BUNDLE_ID: com.asdfadqw.ptort.piowr
         XCODE_WORKSPACE: DogPuppyHouseBone.xcworkspace
         XCODE_SCHEME: DogPuppyHouseBone
-        APP_STORE_APPLE_ID: 6760764912
+        APP_STORE_APPLE_ID: 6760779942
     scripts:
       - name: Install npm dependencies
         script: |

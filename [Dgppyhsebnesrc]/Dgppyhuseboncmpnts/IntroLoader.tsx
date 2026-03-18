@@ -63,10 +63,10 @@ const IntroLoader: React.FC = () => {
           }}
         >
           <Animated.Image
-            source={require('../assets/images/ioslogo.png')}
+            source={require('../assets/images/icon.png')}
             style={{
-              width: 329,
-              height: 329,
+              width: 300,
+              height: 300,
               borderRadius: 32,
               transform: [{ scale: pulse }],
             }}
